@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TimeTime</string>
+    <!-- Replace this with your actual OAuth client ID from Google Cloud Console -->
+    <string name="google_web_client_id">381215284570-jlp6mjjvh120i6pk1sjcci0rgbir9l5r.apps.googleusercontent.com</string>
+</resources>

@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "prod": "connect-6eef0",
+    "default": "connect-6eef0"
+  },
+  "targets": {},
+  "etags": {}
+}

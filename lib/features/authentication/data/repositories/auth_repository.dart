@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
@@ -9,6 +10,14 @@ class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  AuthRepository() {
+    // Firebase Auth on mobile already uses Persistence.LOCAL by default
+    // We'll explicitly set it for web platforms
+    if (kIsWeb) {
+      _auth.setPersistence(Persistence.LOCAL);
+    }
+  }
 
   Future<UserModel?> signInWithEmail(String email, String password) async {
     try {

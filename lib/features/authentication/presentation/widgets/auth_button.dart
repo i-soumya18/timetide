@@ -6,6 +6,7 @@ class AuthButton extends StatelessWidget {
   final bool isLoading;
   final Color backgroundColor;
   final Color textColor;
+  final Widget? icon;
 
   const AuthButton({
     super.key,
@@ -14,6 +15,7 @@ class AuthButton extends StatelessWidget {
     this.isLoading = false,
     this.backgroundColor = const Color(0xFFFFB703),
     this.textColor = Colors.black,
+    this.icon,
   });
 
   @override
@@ -31,13 +33,28 @@ class AuthButton extends StatelessWidget {
       ),
       child: isLoading
           ? const CircularProgressIndicator(color: Colors.white)
-          : Text(
-        text,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+          : icon != null
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    icon!,
+                    const SizedBox(width: 8),
+                    Text(
+                      text,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  text,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
     );
   }
 }

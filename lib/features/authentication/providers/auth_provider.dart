@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 
@@ -9,10 +10,49 @@ class AuthProvider with ChangeNotifier {
   UserModel? _user;
   String? _errorMessage;
   bool _needsProfileSetup = false;
+  bool _isInitialized = false;
 
   UserModel? get user => _user;
   String? get errorMessage => _errorMessage;
   bool get needsProfileSetup => _needsProfileSetup;
+  bool get isInitialized => _isInitialized;
+
+  // Initialize and check for existing session
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        _user = await _getUserDataFromFirestore(currentUser.uid);
+        if (_user != null) {
+          _needsProfileSetup = _user!.name.isEmpty;
+        }
+      }
+    } catch (e) {
+      _errorMessage = "Failed to restore session: ${e.toString()}";
+    } finally {
+      _isInitialized = true;
+      notifyListeners();
+    }
+  }
+
+  // Helper method to get user data from Firestore
+  Future<UserModel?> _getUserDataFromFirestore(String userId) async {
+    try {
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (docSnapshot.exists) {
+        return UserModel.fromJson(docSnapshot.data() ?? {});
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 
   Future<void> signInWithEmail(String email, String password) async {
     try {

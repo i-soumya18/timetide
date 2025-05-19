@@ -11,8 +11,10 @@ class PlannerProvider with ChangeNotifier {
   final ChecklistRepository _checklistRepository = ChecklistRepository();
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   String? _errorMessage;
+  bool _isProcessing = false;
 
   String? get errorMessage => _errorMessage;
+  bool get isProcessing => _isProcessing;
 
   Stream<List<ChatMessageModel>> getChatHistory(String userId) {
     return _plannerRepository.getChatHistory(userId);
@@ -21,23 +23,33 @@ class PlannerProvider with ChangeNotifier {
   Future<void> sendMessage(String userId, String message) async {
     try {
       _errorMessage = null;
+      _isProcessing = true;
+      notifyListeners();
+
       await _plannerRepository.sendMessage(userId, message);
       await _analytics.logEvent(
         name: 'planner_message_sent',
         parameters: {'message_length': message.length},
       );
+
+      _isProcessing = false;
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString().contains('API key')
           ? 'Invalid or missing API key. Please check your configuration.'
           : 'Failed to generate plan. Please try again later.';
+      _isProcessing = false;
       notifyListeners();
     }
   }
 
-  Future<void> addTaskToChecklist(String userId, Map<String, dynamic> taskData) async {
+  Future<void> addTaskToChecklist(
+      String userId, Map<String, dynamic> taskData) async {
     try {
       _errorMessage = null;
+      _isProcessing = true;
+      notifyListeners();
+
       final task = TaskModel(
         id: '',
         userId: userId,
@@ -57,16 +69,23 @@ class PlannerProvider with ChangeNotifier {
           'priority': task.priority,
         },
       );
+
+      _isProcessing = false;
       notifyListeners();
     } catch (e) {
       _errorMessage = 'Failed to add task to checklist: $e';
+      _isProcessing = false;
       notifyListeners();
     }
   }
 
-  Future<void> modifyTask(String userId, String messageId, Map<String, dynamic> updatedTask) async {
+  Future<void> modifyTask(
+      String userId, String messageId, Map<String, dynamic> updatedTask) async {
     try {
       _errorMessage = null;
+      _isProcessing = true;
+      notifyListeners();
+
       final doc = await FirebaseFirestore.instance
           .collection('plannerChats')
           .doc(messageId)
@@ -93,9 +112,12 @@ class PlannerProvider with ChangeNotifier {
           'priority': updatedTask['priority'],
         },
       );
+
+      _isProcessing = false;
       notifyListeners();
     } catch (e) {
       _errorMessage = 'Failed to modify task: $e';
+      _isProcessing = false;
       notifyListeners();
     }
   }
