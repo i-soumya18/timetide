@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
 
@@ -25,7 +26,8 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> signUpWithEmail(String email, String password, String name) async {
+  Future<void> signUpWithEmail(
+      String email, String password, String name) async {
     try {
       _errorMessage = null;
       _user = await _authRepository.signUpWithEmail(email, password, name);
@@ -75,11 +77,11 @@ class AuthProvider with ChangeNotifier {
         avatar: avatar,
         preferences: preferences,
       );
-      final updatedUser = await _firestore
+      final updatedUser = await FirebaseFirestore.instance
           .collection('users')
           .doc(_user!.id)
           .get()
-          .then((doc) => UserModel.fromJson(doc.data()!));
+          .then((doc) => UserModel.fromJson(doc.data() ?? {}));
       _user = updatedUser;
       _needsProfileSetup = false;
       notifyListeners();

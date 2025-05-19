@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../authentication/providers/auth_provider.dart';
-import '../../checklist/presentation/widgets/task_input_modal.dart';
-import '../../checklist/providers/checklist_provider.dart';
-import '../../health_habits/presentation/widgets/habit_input_modal.dart';
-import '../../health_habits/providers/health_habits_provider.dart';
-import '../providers/reminders_provider.dart';
+import 'package:timetide/features/authentication/providers/auth_provider.dart';
+import 'package:timetide/features/checklist/providers/checklist_provider.dart';
+import 'package:timetide/features/health_habits/presentation/widgets/habit_input_modal.dart';
+import 'package:timetide/features/health_habits/providers/health_habits_provider.dart';
+import 'package:timetide/features/reminders/data/models/reminder_model.dart';
+import 'package:timetide/features/reminders/providers/reminders_provider.dart';
+import 'package:timetide/models/unified_task_model.dart';
+import '../../../health_habits/data/models/habit_model.dart';
 import '../widgets/reminder_card.dart';
+import '../widgets/unified_task_adapter.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -24,11 +27,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
     provider.initializeNotifications();
   }
 
-  void _showEditModal(BuildContext context, {TaskModel? task, HabitModel? habit}) {
+  void _showEditModal(BuildContext context,
+      {UnifiedTaskModel? task, HabitModel? habit}) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final checklistProvider = Provider.of<ChecklistProvider>(context, listen: false);
-    final healthHabitsProvider = Provider.of<HealthHabitsProvider>(context, listen: false);
-
+    final checklistProvider =
+        Provider.of<ChecklistProvider>(context, listen: false);
+    final healthHabitsProvider =
+        Provider.of<HealthHabitsProvider>(context, listen: false);
     if (task != null) {
       showModalBottomSheet(
         context: context,
@@ -43,11 +48,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
           expand: false,
           builder: (context, scrollController) => SingleChildScrollView(
             controller: scrollController,
-            child: TaskInputModal(
-              task: task,
+            child: UnifiedTaskInputAdapter(
+              unifiedTask: task,
               categories: checklistProvider.categories,
               onSave: (newTask) {
-                checklistProvider.updateTask(authProvider.user!.id, newTask);
+                checklistProvider.updateTaskFromUnified(
+                    authProvider.user!.id, newTask);
               },
             ),
           ),
@@ -70,7 +76,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
             child: HabitInputModal(
               habit: habit,
               onSave: (newHabit) {
-                healthHabitsProvider.updateHabit(authProvider.user!.id, newHabit);
+                healthHabitsProvider.updateHabit(
+                    authProvider.user!.id, newHabit);
               },
             ),
           ),
@@ -88,7 +95,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
       appBar: AppBar(
         title: Text(
           'Reminders',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+          style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: const Color(0xFF219EBC),
         elevation: 0,
@@ -134,22 +142,32 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       ? remindersProvider.getTask(reminder.referenceId)
                       : remindersProvider.getHabit(reminder.referenceId),
                   builder: (context, AsyncSnapshot snapshot) {
-                    final task = reminder.type == 'task' ? snapshot.data as TaskModel? : null;
-                    final habit = reminder.type == 'habit' ? snapshot.data as HabitModel? : null;
+                    final task = reminder.type == 'task'
+                        ? snapshot.data as UnifiedTaskModel?
+                        : null;
+                    final habit = reminder.type == 'habit'
+                        ? snapshot.data as HabitModel?
+                        : null;
                     return ReminderCard(
                       reminder: reminder,
                       task: task,
                       habit: habit,
                       onSnooze10Min: () {
-                        remindersProvider.snoozeReminder(reminder.id, const Duration(minutes: 10));
+                        remindersProvider.snoozeReminder(
+                            reminder.id, const Duration(minutes: 10));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('$reminder.type snoozed for 10 minutes')),
+                          SnackBar(
+                              content: Text(
+                                  '$reminder.type snoozed for 10 minutes')),
                         );
                       },
                       onSnooze1Hour: () {
-                        remindersProvider.snoozeReminder(reminder.id, const Duration(hours: 1));
+                        remindersProvider.snoozeReminder(
+                            reminder.id, const Duration(hours: 1));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('$reminder.type snoozed for 1 hour')),
+                          SnackBar(
+                              content:
+                                  Text('$reminder.type snoozed for 1 hour')),
                         );
                       },
                       onDismiss: () {
@@ -158,7 +176,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
                           SnackBar(content: Text('$reminder.type dismissed')),
                         );
                       },
-                      onEdit: () => _showEditModal(context, task: task, habit: habit),
+                      onEdit: () =>
+                          _showEditModal(context, task: task, habit: habit),
                     );
                   },
                 );

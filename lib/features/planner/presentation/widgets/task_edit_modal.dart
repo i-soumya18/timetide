@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/colors.dart';
+import 'package:timetide/core/colors.dart';
 
 class TaskEditModal extends StatefulWidget {
   final Map<String, dynamic> task;

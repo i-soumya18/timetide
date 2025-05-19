@@ -1,130 +1,131 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:uuid/uuid.dart';
-import '../../checklist/data/models/task_model.dart';
-import '../../health_habits/data/models/habit_model.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timetide/models/unified_task_model.dart';
+import '../../../../features/health_habits/data/models/habit_model.dart';
 import '../models/reminder_model.dart';
 
 class RemindersRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   Future<void> initializeNotifications() async {
-    const androidInit = AndroidInitializationSettings('app_icon');
-    const iosInit = DarwinInitializationSettings();
-    const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
-    await _notificationsPlugin.initialize(initSettings);
+    tz.initializeTimeZones();
+    const initializationSettingsAndroid =
+        AndroidInitializationSettings('app_icon');
+    const initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    await _notificationsPlugin.initialize(initializationSettings);
   }
 
   Stream<List<ReminderModel>> getReminders(String userId) {
     return _firestore
+        .collection('users')
+        .doc(userId)
         .collection('reminders')
-        .where('userId', isEqualTo: userId)
-        .where('isActive', isEqualTo: true)
-        .orderBy('scheduledTime')
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => ReminderModel.fromJson(doc.data()))
-        .toList());
+            .map((doc) => ReminderModel.fromJson(doc.data()))
+            .toList());
   }
 
-  Future<TaskModel?> getTask(String taskId) async {
-    try {
-      final doc = await _firestore.collection('tasks').doc(taskId).get();
-      if (!doc.exists) return null;
-      return TaskModel.fromJson(doc.data()!);
-    } catch (e) {
-      rethrow;
-    }
+  Future<UnifiedTaskModel?> getTask(String taskId) async {
+    final doc = await _firestore.collection('tasks').doc(taskId).get();
+    if (!doc.exists) return null;
+    return UnifiedTaskModel.fromJson(doc.data()!);
   }
 
   Future<HabitModel?> getHabit(String habitId) async {
-    try {
-      final doc = await _firestore.collection('habits').doc(habitId).get();
-      if (!doc.exists) return null;
-      return HabitModel.fromJson(doc.data()!);
-    } catch (e) {
-      rethrow;
-    }
+    final doc = await _firestore.collection('habits').doc(habitId).get();
+    if (!doc.exists) return null;
+    return HabitModel.fromJson(doc.data()!);
   }
 
   Future<void> addReminder(String userId, ReminderModel reminder) async {
-    try {
-      final reminderId = const Uuid().v4();
-      final reminderData = reminder.toJson()..['id'] = reminderId;
-      await _firestore.collection('reminders').doc(reminderId).set(reminderData);
-      await _scheduleNotification(reminder);
-    } catch (e) {
-      rethrow;
-    }
+    final docRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('reminders')
+        .doc();
+    final newReminder = reminder.copyWith(id: docRef.id);
+    await docRef.set(newReminder.toJson());
+
+    await _scheduleNotification(
+      docRef.id,
+      reminder.type == 'task' ? 'Task Reminder' : 'Habit Reminder',
+      reminder.scheduledTime,
+    );
   }
 
   Future<void> snoozeReminder(String reminderId, Duration duration) async {
-    try {
-      final doc = await _firestore.collection('reminders').doc(reminderId).get();
-      if (!doc.exists) return;
-      final reminder = ReminderModel.fromJson(doc.data()!);
+    final doc = await _firestore
+        .collectionGroup('reminders')
+        .where('id', isEqualTo: reminderId)
+        .get();
+    if (doc.docs.isNotEmpty) {
+      final reminder = ReminderModel.fromJson(doc.docs.first.data());
       final newTime = reminder.scheduledTime.add(duration);
-      await _firestore.collection('reminders').doc(reminderId).update({
+      await doc.docs.first.reference.update({
         'scheduledTime': newTime.toIso8601String(),
       });
       await _scheduleNotification(
-        reminder.copyWith(scheduledTime: newTime),
+        reminderId,
+        reminder.type == 'task' ? 'Task Reminder' : 'Habit Reminder',
+        newTime,
       );
-    } catch (e) {
-      rethrow;
     }
   }
 
   Future<void> dismissReminder(String reminderId) async {
-    try {
-      await _firestore.collection('reminders').doc(reminderId).update({
-        'isActive': false,
-      });
+    final doc = await _firestore
+        .collectionGroup('reminders')
+        .where('id', isEqualTo: reminderId)
+        .get();
+    if (doc.docs.isNotEmpty) {
+      await doc.docs.first.reference.delete();
       await _notificationsPlugin.cancel(reminderId.hashCode);
-    } catch (e) {
-      rethrow;
     }
   }
 
-  Future<void> _scheduleNotification(ReminderModel reminder) async {
-    final androidDetails = AndroidNotificationDetails(
-      'reminder_channel',
-      'Reminders',
-      channelDescription: 'Notifications for task and habit reminders',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    final iosDetails = DarwinNotificationDetails();
-    final notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    final title = reminder.type == 'task' ? 'Task Reminder' : 'Habit Reminder';
-    final body = 'Time to complete your ${reminder.type}!';
-
-    await _notificationsPlugin.schedule(
-      reminder.id.hashCode,
+  Future<void> _scheduleNotification(
+      String id, String title, DateTime scheduledTime) async {
+    await _notificationsPlugin.zonedSchedule(
+      id.hashCode,
       title,
-      body,
-      reminder.scheduledTime,
-      notificationDetails,
-      androidAllowWhileIdle: true,
+      'Scheduled for ${scheduledTime.toString()}',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'reminder_channel',
+          'Reminders',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 }
 
 extension on ReminderModel {
-  ReminderModel copyWith({DateTime? scheduledTime}) {
+  ReminderModel copyWith({
+    String? id,
+    String? userId,
+    String? type,
+    String? referenceId,
+    DateTime? scheduledTime,
+  }) {
     return ReminderModel(
-      id: id,
-      userId: userId,
-      type: type,
-      referenceId: referenceId,
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      type: type ?? this.type,
+      referenceId: referenceId ?? this.referenceId,
       scheduledTime: scheduledTime ?? this.scheduledTime,
-      isActive: isActive,
     );
   }
 }

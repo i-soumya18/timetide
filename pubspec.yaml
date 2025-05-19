@@ -30,6 +30,7 @@ dependencies:
   timezone: ^0.9.0
   # Fonts
   google_fonts: ^6.2.1
+  google_sign_in: ^6.2.1
   # Drag-and-drop
   reorderables: ^0.6.0
   # Data
@@ -53,6 +54,7 @@ flutter:
     - assets/lottie/
     - assets/images/
     - assets/fonts/
+    - .env
   fonts:
     - family: Poppins
       fonts:

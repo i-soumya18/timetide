@@ -4,6 +4,7 @@ import 'package:timezone/data/latest.dart' as tz_init;
 import 'package:timetide/core/config/app_config.dart';
 import 'package:timetide/core/services/logging_service.dart';
 import 'package:timetide/models/task_model.dart';
+import 'dart:io' show Platform;
 
 class NotificationService {
   // Singleton pattern
@@ -59,16 +60,19 @@ class NotificationService {
       final bool? grantedAndroid =
           await androidImplementation?.requestNotificationsPermission();
 
-      final DarwinFlutterLocalNotificationsPlugin? iOSImplementation =
-          _flutterLocalNotificationsPlugin
-              .resolvePlatformSpecificImplementation<
-                  DarwinFlutterLocalNotificationsPlugin>();
+      bool? grantedIOS = false;
 
-      final bool? grantedIOS = await iOSImplementation?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      if (Platform.isIOS) {
+        final iosPlatformSpecific = _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>();
+
+        grantedIOS = await iosPlatformSpecific?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
 
       return grantedAndroid ?? grantedIOS ?? false;
     } catch (e) {

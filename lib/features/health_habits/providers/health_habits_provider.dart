@@ -8,7 +8,8 @@ import '../../reminders/data/models/reminder_model.dart';
 import '../../reminders/data/repositories/reminders_repository.dart';
 
 class HealthHabitsProvider with ChangeNotifier {
-  final HealthHabitsRepository _healthHabitsRepository = HealthHabitsRepository();
+  final HealthHabitsRepository _healthHabitsRepository =
+      HealthHabitsRepository();
   final RemindersRepository _remindersRepository = RemindersRepository();
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   String? _errorMessage;
@@ -94,10 +95,10 @@ class HealthHabitsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteHabit(String habitId) async {
+  Future<void> deleteHabit(String userId, String habitId) async {
     try {
       _errorMessage = null;
-      await _healthHabitsRepository.deleteHabit(habitId);
+      await _healthHabitsRepository.deleteHabit(userId, habitId);
       await _analytics.logEvent(name: 'habit_deleted');
       notifyListeners();
     } catch (e) {
@@ -128,7 +129,8 @@ class HealthHabitsProvider with ChangeNotifier {
     }
   }
 
-  Future<List<HabitLogModel>> getHabitLogs(String userId, String habitId) async {
+  Future<List<HabitLogModel>> getHabitLogs(
+      String userId, String habitId) async {
     try {
       return await _healthHabitsRepository.getHabitLogs(userId, habitId);
     } catch (e) {

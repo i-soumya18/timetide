@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:reorderables/reorderables.dart';
-import 'dart:io';
-import '../../authentication/providers/auth_provider.dart';
-import '../../home/data/models/task_model.dart';
-import '../providers/checklist_provider.dart';
-import '../widgets/task_card.dart';
+import 'package:timetide/features/authentication/providers/auth_provider.dart';
+import 'package:timetide/features/checklist/data/models/task_model.dart';
+import 'package:timetide/features/checklist/providers/checklist_provider.dart';
 import '../widgets/task_input_modal.dart';
+import 'package:timetide/core/colors.dart';
+import 'dart:io';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ChecklistBuilderScreen extends StatefulWidget {
   const ChecklistBuilderScreen({super.key});
@@ -17,31 +18,12 @@ class ChecklistBuilderScreen extends StatefulWidget {
   State<ChecklistBuilderScreen> createState() => _ChecklistBuilderScreenState();
 }
 
-class _ChecklistBuilderScreenState extends State<ChecklistBuilderScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    final checklistProvider = Provider.of<ChecklistProvider>(context, listen: false);
-    _tabController = TabController(length: checklistProvider.categories.length, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Map<String, Color> _categoryColors = {
-    'Work': const Color(0xFFFFB703),
-    'Health': const Color(0xFFF72585),
-    'Errands': const Color(0xFF2A9D8F),
-    'Personal': const Color(0xFFFB8500),
-  };
-
-  void _showTaskModal(BuildContext context, {TaskModel? task}) {
-    final checklistProvider = Provider.of<ChecklistProvider>(context, listen: false);
+class _ChecklistBuilderScreenState extends State<ChecklistBuilderScreen> {
+  void _showTaskInputModal(BuildContext context, String category,
+      {TaskModel? task}) {
+    final checklistProvider =
+        Provider.of<ChecklistProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -59,7 +41,6 @@ class _ChecklistBuilderScreenState extends State<ChecklistBuilderScreen> with Si
             task: task,
             categories: checklistProvider.categories,
             onSave: (newTask) {
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
               if (task == null) {
                 checklistProvider.addTask(authProvider.user!.id, newTask);
               } else {
@@ -72,120 +53,125 @@ class _ChecklistBuilderScreenState extends State<ChecklistBuilderScreen> with Si
     );
   }
 
+  Future<String> savePdf(List<int> pdfBytes, String fileName) async {
+    final directory = await getTemporaryDirectory();
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(pdfBytes);
+    return file.path;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final checklistProvider = Provider.of<ChecklistProvider>(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Checklist Builder',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF219EBC),
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          unselectedLabelStyle: GoogleFonts.poppins(),
-          indicatorColor: const Color(0xFFFFB703),
-          labelColor: const Color(0xFFFFB703),
-          unselectedLabelColor: Colors.white70,
-          tabs: checklistProvider.categories
-              .map((category) => Tab(text: category))
-              .toList(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-            onPressed: () async {
-              try {
-                final pdfBytes = await checklistProvider.generateChecklistPdf(authProvider.user!.id);
-                final dir = await getApplicationDocumentsDirectory();
-                final file = File('${dir.path}/checklist_${DateTime.now().toIso8601String()}.pdf');
-                await file.write(pdfBytes);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('PDF saved to ${file.path}')),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error generating PDF: $e')),
-                );
-              }
-            },
+    return DefaultTabController(
+      length: checklistProvider.categories.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Checklist Builder',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
           ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF8ECAE6), Color(0xFF219EBC)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+          bottom: TabBar(
+            tabs: checklistProvider.categories
+                .map((category) => Tab(text: category))
+                .toList(),
+            labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            unselectedLabelStyle: GoogleFonts.poppins(),
           ),
-        ),
-        child: TabBarView(
-          controller: _tabController,
-          children: checklistProvider.categories.map((category) {
-            return StreamBuilder<List<TaskModel>>(
-              stream: checklistProvider.getTasks(authProvider.user!.id, category),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final tasks = snapshot.data!;
-                return ReorderableListView(
-                  onReorder: (oldIndex, newIndex) {
-                    if (newIndex > oldIndex) newIndex--;
-                    final updatedTasks = List<TaskModel>.from(tasks);
-                    final task = updatedTasks.removeAt(oldIndex);
-                    updatedTasks.insert(newIndex, task);
-                    checklistProvider.reorderTasks(authProvider.user!.id, category, updatedTasks);
-                  },
-                  children: tasks.map((task) {
-                    return Dismissible(
-                      key: Key(task.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (direction) {
-                        checklistProvider.deleteTask(task.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${task.title} deleted')),
-                        );
-                      },
-                      child: TaskCard(
-                        task: task,
-                        categoryColor: _categoryColors[category] ?? const Color(0xFF219EBC),
-                        onEdit: () => _showTaskModal(context, task: task),
-                        onDelete: () {
-                          checklistProvider.deleteTask(task.id);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${task.title} deleted')),
-                          );
-                        },
-                      ),
-                    );
-                  }).toList(),
-                );
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              onPressed: () async {
+                final pdfBytes = await checklistProvider
+                    .generateChecklistPdf(authProvider.user!.id);
+                final path = await savePdf(pdfBytes, 'checklist.pdf');
+                await OpenFile.open(path);
               },
-            );
-          }).toList(),
+            ),
+          ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showTaskModal(context),
-        backgroundColor: const Color(0xFFFFB703),
-        child: const Icon(Icons.add, color: Colors.black),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.secondary, AppColors.primary],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: TabBarView(
+            children: checklistProvider.categories.map((category) {
+              return StreamBuilder<List<TaskModel>>(
+                stream:
+                    checklistProvider.getTasks(authProvider.user!.id, category),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final tasks = snapshot.data!;
+                  return ReorderableListView(
+                    onReorder: (oldIndex, newIndex) {
+                      checklistProvider.reorderTasks(
+                        authProvider.user!.id,
+                        category,
+                        tasks,
+                        oldIndex: oldIndex,
+                        newIndex: newIndex,
+                      );
+                    },
+                    children: tasks.map((task) {
+                      return Card(
+                        key: ValueKey(task.id),
+                        child: ListTile(
+                          title: Text(
+                            task.title,
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            'Priority: ${task.priority}${task.time != null ? ' • Time: ${task.time!.toString().substring(11, 16)}' : ''}',
+                            style: GoogleFonts.poppins(),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _showTaskInputModal(
+                                    context, category,
+                                    task: task),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () {
+                                  checklistProvider.deleteTask(
+                                      authProvider.user?.id ?? '', task.id);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text('${task.title} deleted')),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              );
+            }).toList(),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () =>
+              _showTaskInputModal(context, checklistProvider.categories.first),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

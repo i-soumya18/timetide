@@ -15,8 +15,8 @@ class FirestoreService {
 
   Future<void> createUser(UserModel user) async {
     try {
-      await _usersCollection.doc(user.uid).set(user.toJson());
-      _logger.info('User created in Firestore: ${user.uid}');
+      await _usersCollection.doc(user.id).set(user.toJson());
+      _logger.info('User created in Firestore: ${user.id}');
     } catch (e) {
       _logger.error('Error creating user in Firestore', error: e);
       rethrow;
@@ -38,8 +38,8 @@ class FirestoreService {
 
   Future<void> updateUser(UserModel user) async {
     try {
-      await _usersCollection.doc(user.uid).update(user.toJson());
-      _logger.info('User updated in Firestore: ${user.uid}');
+      await _usersCollection.doc(user.id).update(user.toJson());
+      _logger.info('User updated in Firestore: ${user.id}');
     } catch (e) {
       _logger.error('Error updating user in Firestore', error: e);
       rethrow;

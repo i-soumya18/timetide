@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../checklist/data/models/task_model.dart';
-import '../../health_habits/data/models/habit_model.dart';
-import '../models/reminder_model.dart';
+
+import 'package:timetide/models/unified_task_model.dart';
+import '../../data/models/reminder_model.dart';
+import 'package:timetide/features/health_habits/data/models/habit_model.dart';
+
+import 'package:timetide/features/reminders/data/models/reminder_model.dart';
 
 class ReminderCard extends StatelessWidget {
   final ReminderModel reminder;
-  final TaskModel? task;
+  final UnifiedTaskModel? task;
   final HabitModel? habit;
   final VoidCallback onSnooze10Min;
   final VoidCallback onSnooze1Hour;

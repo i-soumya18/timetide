@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
-import '../../../core/services/gemini_service.dart';
+import 'package:timetide/core/services/gemini_service.dart';
 import '../models/chat_message_model.dart';
 
 class PlannerRepository {

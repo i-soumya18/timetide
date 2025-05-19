@@ -1,24 +1,27 @@
 class UserModel {
   final String id;
+  final String name;
   final String email;
-  final String? name;
-  final String? avatar;
+  final String? avatarUrl;
+  final bool isAnonymous;
   final List<String> preferences;
 
   UserModel({
     required this.id,
+    required this.name,
     required this.email,
-    this.name,
-    this.avatar,
+    this.avatarUrl,
+    this.isAnonymous = false,
     this.preferences = const [],
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      name: json['name'] as String?,
-      avatar: json['avatar'] as String?,
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      avatarUrl: json['avatarUrl'],
+      isAnonymous: json['isAnonymous'] ?? false,
       preferences: List<String>.from(json['preferences'] ?? []),
     );
   }
@@ -26,9 +29,10 @@ class UserModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'email': email,
       'name': name,
-      'avatar': avatar,
+      'email': email,
+      'avatarUrl': avatarUrl,
+      'isAnonymous': isAnonymous,
       'preferences': preferences,
     };
   }

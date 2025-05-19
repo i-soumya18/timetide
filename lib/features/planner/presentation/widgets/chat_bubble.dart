@@ -1,38 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:timetide/core/colors.dart';
 
 class ChatBubble extends StatelessWidget {
-  final String content;
-  final bool isUserMessage;
+  final String message;
+  final bool isUser;
 
   const ChatBubble({
     super.key,
-    required this.content,
-    required this.isUserMessage,
+    required this.message,
+    required this.isUser,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isUserMessage
-              ? const Color(0xFF8ECAE6)
-              : Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(16).copyWith(
-            topLeft: isUserMessage ? const Radius.circular(16) : const Radius.circular(4),
-            topRight: isUserMessage ? const Radius.circular(4) : const Radius.circular(16),
-          ),
-        ),
-        child: Text(
-          content,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            color: isUserMessage ? Colors.black : Colors.black87,
-          ),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isUser ? AppColors.accent : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Text(
+        message,
+        style: GoogleFonts.poppins(
+          color: isUser ? Colors.black : AppColors.textLight,
         ),
       ),
     );

@@ -1,30 +1,30 @@
 class ChatMessageModel {
   final String id;
   final String userId;
-  final String content;
-  final bool isUserMessage;
+  final String message;
+  final bool isUser;
+  final List<Map<String, dynamic>>? tasks;
   final DateTime timestamp;
-  final List<Map<String, dynamic>>? suggestedTasks;
 
   ChatMessageModel({
     required this.id,
     required this.userId,
-    required this.content,
-    required this.isUserMessage,
+    required this.message,
+    required this.isUser,
+    this.tasks,
     required this.timestamp,
-    this.suggestedTasks,
   });
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
     return ChatMessageModel(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      content: json['content'] as String,
-      isUserMessage: json['isUserMessage'] as bool,
-      timestamp: DateTime.parse(json['timestamp'] as String),
-      suggestedTasks: json['suggestedTasks'] != null
-          ? List<Map<String, dynamic>>.from(json['suggestedTasks'])
+      id: json['id'] ?? '',
+      userId: json['userId'] ?? '',
+      message: json['message'] ?? '',
+      isUser: json['isUser'] ?? false,
+      tasks: json['tasks'] != null
+          ? List<Map<String, dynamic>>.from(json['tasks'])
           : null,
+      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -32,10 +32,10 @@ class ChatMessageModel {
     return {
       'id': id,
       'userId': userId,
-      'content': content,
-      'isUserMessage': isUserMessage,
+      'message': message,
+      'isUser': isUser,
+      'tasks': tasks,
       'timestamp': timestamp.toIso8601String(),
-      'suggestedTasks': suggestedTasks,
     };
   }
 }

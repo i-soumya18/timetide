@@ -22,7 +22,8 @@ class AuthRepository {
     }
   }
 
-  Future<UserModel?> signUpWithEmail(String email, String password, String name) async {
+  Future<UserModel?> signUpWithEmail(
+      String email, String password, String name) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -35,7 +36,10 @@ class AuthRepository {
           email: email,
           name: name,
         );
-        await _firestore.collection('users').doc(user.uid).set(userModel.toJson());
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .set(userModel.toJson());
         return userModel;
       }
       return null;
@@ -62,13 +66,13 @@ class AuthRepository {
         final userModel = UserModel(
           id: user.uid,
           email: user.email ?? '',
-          name: user.displayName,
-          avatar: user.photoURL,
+          name: user.displayName ?? '',
+          avatarUrl: user.photoURL,
         );
         await _firestore.collection('users').doc(user.uid).set(
-          userModel.toJson(),
-          SetOptions(merge: true),
-        );
+              userModel.toJson(),
+              SetOptions(merge: true),
+            );
         return userModel;
       }
       return null;
@@ -101,7 +105,7 @@ class AuthRepository {
         final ref = _storage.ref().child('avatars/$userId/avatar.jpg');
         await ref.putFile(avatar);
         final avatarUrl = await ref.getDownloadURL();
-        updates['avatar'] = avatarUrl;
+        updates['avatarUrl'] = avatarUrl;
       }
 
       await _firestore.collection('users').doc(userId).update(updates);
@@ -120,8 +124,9 @@ class AuthRepository {
     return UserModel(
       id: user.uid,
       email: user.email ?? '',
-      name: user.displayName,
-      avatar: user.photoURL,
+      name: user.displayName ?? '',
+      avatarUrl: user.photoURL,
+      isAnonymous: user.isAnonymous,
       preferences: [],
     );
   }

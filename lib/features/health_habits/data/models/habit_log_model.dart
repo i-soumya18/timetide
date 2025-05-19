@@ -10,16 +10,16 @@ class HabitLogModel {
     required this.userId,
     required this.habitId,
     required this.date,
-    this.completed = false,
+    required this.completed,
   });
 
   factory HabitLogModel.fromJson(Map<String, dynamic> json) {
     return HabitLogModel(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      habitId: json['habitId'] as String,
-      date: DateTime.parse(json['date'] as String),
-      completed: json['completed'] as bool,
+      id: json['id'] ?? '',
+      userId: json['userId'] ?? '',
+      habitId: json['habitId'] ?? '',
+      date: DateTime.parse(json['date']),
+      completed: json['completed'] ?? false,
     );
   }
 

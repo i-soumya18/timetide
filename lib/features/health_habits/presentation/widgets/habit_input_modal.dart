@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/habit_model.dart';
+import 'package:timetide/features/health_habits/data/models/habit_model.dart';
 
 class HabitInputModal extends StatefulWidget {
   final HabitModel? habit;

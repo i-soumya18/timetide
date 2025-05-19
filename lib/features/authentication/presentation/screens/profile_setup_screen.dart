@@ -1,11 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../widgets/auth_button.dart';
+import 'package:timetide/features/authentication//providers/auth_provider.dart';
 import '../widgets/avatar_picker.dart';
-import '../../providers/auth_provider.dart';
+import 'package:timetide/core/colors.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -16,20 +14,26 @@ class ProfileSetupScreen extends StatefulWidget {
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _nameController = TextEditingController();
-  File? _avatarFile;
-  final List<String> _goals = ['Productivity', 'Health', 'Study', 'Personal', 'Errands'];
+  final _formKey = GlobalKey<FormState>();
   final List<String> _selectedGoals = [];
-  bool _isLoading = false;
+  String? _selectedAvatarUrl;
+  final List<String> _availableGoals = [
+    'Productivity',
+    'Health',
+    'Learning',
+    'Relaxation',
+  ];
 
   @override
   void initState() {
     super.initState();
-    final user = Provider.of<AuthProvider>(context, listen: false).user;
-    if (user?.name != null) {
-      _nameController.text = user!.name!;
-    }
-    if (user?.preferences != null) {
-      _selectedGoals.addAll(user!.preferences);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    if (user != null) {
+      _nameController.text = user.name;
+      if (user.preferences.isNotEmpty) {
+        _selectedGoals.addAll(user.preferences);
+      }
     }
   }
 
@@ -39,126 +43,98 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _avatarFile = File(pickedFile.path);
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Set Up Your Profile',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: AppColors.primary,
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF8ECAE6), Color(0xFF219EBC)],
+            colors: [AppColors.secondary, AppColors.primary],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Complete Your Profile',
-                  style: GoogleFonts.poppins(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 32),
                 AvatarPicker(
-                  avatarUrl: authProvider.user?.avatar,
-                  avatarFile: _avatarFile,
-                  onPickImage: _pickImage,
+                  imageUrl: authProvider.user?.avatarUrl,
+                  onImageSelected: (url) {
+                    // Handle avatar selection
+                    _selectedAvatarUrl = url;
+                  },
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    hintText: 'Name',
-                    hintStyle: const TextStyle(color: Colors.white70),
+                    labelText: 'Name',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
                     ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
-                  style: const TextStyle(color: Colors.white),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Please enter your name' : null,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Text(
                   'Select Your Goals',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 16),
-                ..._goals.map((goal) {
-                  return CheckboxListTile(
-                    title: Text(goal, style: const TextStyle(color: Colors.white)),
-                    value: _selectedGoals.contains(goal),
-                    onChanged: (value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedGoals.add(goal);
-                        } else {
-                          _selectedGoals.remove(goal);
-                        }
-                      });
-                    },
-                    checkColor: const Color(0xFF219EBC),
-                    activeColor: const Color(0xFFFFB703),
-                  );
-                }),
+                Wrap(
+                  spacing: 8,
+                  children: _availableGoals
+                      .map((goal) => ChoiceChip(
+                            label: Text(goal),
+                            selected: _selectedGoals.contains(goal),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _selectedGoals.add(goal);
+                                } else {
+                                  _selectedGoals.remove(goal);
+                                }
+                              });
+                            },
+                          ))
+                      .toList(),
+                ),
                 const SizedBox(height: 24),
-                if (authProvider.errorMessage != null)
-                  Text(
-                    authProvider.errorMessage!,
-                    style: const TextStyle(color: Colors.redAccent),
-                  ),
-                const SizedBox(height: 16),
-                AuthButton(
-                  text: 'Save Profile',
-                  isLoading: _isLoading,
+                ElevatedButton(
                   onPressed: () async {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    await authProvider.updateUserProfile(
-                      name: _nameController.text.trim(),
-                      avatar: _avatarFile,
-                      preferences: _selectedGoals,
-                    );
-                    setState(() {
-                      _isLoading = false;
-                    });
-                    if (authProvider.user != null && !authProvider.needsProfileSetup) {
-                      Navigator.pushReplacementNamed(context, '/home');
+                    if (_formKey.currentState!.validate()) {
+                      await authProvider.updateUserProfile(
+                        name: _nameController.text.trim(),
+                        preferences: _selectedGoals,
+                      );
+                      if (authProvider.user != null) {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
                     }
                   },
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/home');
-                  },
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(color: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: Text(
+                    'Save Profile',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../home/data/models/task_model.dart';
+import 'package:timetide/features/checklist/data/models/task_model.dart';
 
 class TaskInputModal extends StatefulWidget {
   final TaskModel? task;
@@ -52,14 +52,16 @@ class _TaskInputModalState extends State<TaskInputModal> {
         children: [
           Text(
             widget.task == null ? 'Add Task' : 'Edit Task',
-            style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+            style:
+                GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _titleController,
             decoration: InputDecoration(
               labelText: 'Task Title',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
             ),
           ),
           const SizedBox(height: 16),
@@ -67,7 +69,8 @@ class _TaskInputModalState extends State<TaskInputModal> {
             value: _category,
             decoration: InputDecoration(
               labelText: 'Category',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
             ),
             items: widget.categories
                 .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
@@ -83,7 +86,8 @@ class _TaskInputModalState extends State<TaskInputModal> {
             value: _priority,
             decoration: InputDecoration(
               labelText: 'Priority',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
             ),
             items: ['Low', 'Medium', 'High']
                 .map((pri) => DropdownMenuItem(value: pri, child: Text(pri)))
@@ -149,7 +153,8 @@ class _TaskInputModalState extends State<TaskInputModal> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFFB703),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
             ),
             child: Text(
               'Save',

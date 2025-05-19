@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/colors.dart';
-import '../../authentication/providers/auth_provider.dart';
-import '../../core/colors.dart';
-import '../providers/planner_provider.dart';
+import 'package:timetide/features/authentication/providers/auth_provider.dart';
+import 'package:timetide/core/colors.dart';
+import 'package:timetide/features/planner/providers/planner_provider.dart';
+import '../../data/models/chat_message_model.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/suggestion_card.dart';
 

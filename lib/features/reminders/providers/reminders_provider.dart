@@ -1,6 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
-import '../../checklist/data/models/task_model.dart';
+import 'package:timetide/models/unified_task_model.dart';
 import '../../health_habits/data/models/habit_model.dart';
 import '../data/models/reminder_model.dart';
 import '../data/repositories/reminders_repository.dart';
@@ -25,7 +25,7 @@ class RemindersProvider with ChangeNotifier {
     return _repository.getReminders(userId);
   }
 
-  Future<TaskModel?> getTask(String taskId) async {
+  Future<UnifiedTaskModel?> getTask(String taskId) async {
     try {
       return await _repository.getTask(taskId);
     } catch (e) {

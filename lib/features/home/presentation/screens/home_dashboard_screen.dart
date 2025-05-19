@@ -2,9 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../authentication/providers/auth_provider.dart';
-import '../../core/colors.dart';
-import '../providers/home_provider.dart';
+import 'package:timetide/features/authentication/providers/auth_provider.dart';
+import 'package:timetide/core/colors.dart';
+import 'package:timetide/features/home/providers/home_provider.dart';
 
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});

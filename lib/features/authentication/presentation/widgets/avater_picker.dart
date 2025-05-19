@@ -1,58 +1,47 @@
-import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:timetide/core/colors.dart';
 
 class AvatarPicker extends StatelessWidget {
-  final String? avatarUrl;
-  final File? avatarFile;
-  final VoidCallback onPickImage;
+  final String? imageUrl;
+  final Function(String) onImageSelected;
 
   const AvatarPicker({
     super.key,
-    this.avatarUrl,
-    this.avatarFile,
-    required this.onPickImage,
+    this.imageUrl,
+    required this.onImageSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPickImage,
-      child: CircleAvatar(
-        radius: 50,
-        backgroundColor: const Color(0xFF8ECAE6),
-        child: avatarFile != null
-            ? ClipOval(
-          child: Image.file(
-            avatarFile!,
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-          ),
-        )
-            : avatarUrl != null
-            ? ClipOval(
-          child: CachedNetworkImage(
-            imageUrl: avatarUrl!,
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-            placeholder: (context, url) =>
-            const CircularProgressIndicator(),
-            errorWidget: (context, url, error) => const Icon(
-              Icons.person,
-              size: 50,
-              color: Colors.white,
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 50,
+          backgroundColor: AppColors.primary,
+          backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
+          child: imageUrl == null
+              ? const Icon(Icons.person, size: 50, color: Colors.white)
+              : null,
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () {
+            // Placeholder: Implement image picking logic later
+            onImageSelected('https://via.placeholder.com/150');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.accent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
             ),
           ),
-        )
-            : const Icon(
-          Icons.person,
-          size: 50,
-          color: Colors.white,
+          child: Text(
+            'Pick Avatar',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
+      ],
     );
   }
 }

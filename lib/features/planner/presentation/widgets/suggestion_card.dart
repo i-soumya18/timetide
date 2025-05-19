@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/colors.dart';
+import 'package:timetide/core/colors.dart';
 import 'task_edit_modal.dart';
 
 class SuggestionCard extends StatelessWidget {

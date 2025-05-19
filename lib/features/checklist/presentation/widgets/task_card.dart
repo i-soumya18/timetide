@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../home/data/models/task_model.dart';
+import '../../data/models/task_model.dart';
 
 class TaskCard extends StatelessWidget {
   final TaskModel task;

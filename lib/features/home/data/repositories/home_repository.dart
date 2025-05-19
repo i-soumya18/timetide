@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../authentication/data/models/user_model.dart';
+import 'package:timetide/features/authentication/data/models/user_model.dart';
 import '../models/task_model.dart';
 
 class HomeRepository {

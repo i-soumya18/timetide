@@ -1,30 +1,39 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/health_metric_model.dart';
+import 'package:timetide/features/health_habits/data/models/health_metric_model.dart';
+
+// Default callback for the onUpdate parameter
+void _defaultOnUpdate(int value) {}
 
 class HealthInsightCard extends StatelessWidget {
   final String title;
-  final String type;
+  final IconData icon;
   final List<HealthMetricModel> metrics;
+  final String type;
   final int goal;
   final Function(int) onUpdate;
 
   const HealthInsightCard({
     super.key,
     required this.title,
-    required this.type,
+    required this.icon,
     required this.metrics,
+    required this.type,
     required this.goal,
-    required this.onUpdate,
+    this.onUpdate = _defaultOnUpdate,
   });
 
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
     final todayMetric = metrics.firstWhere(
-          (m) => m.date.day == today.day && m.date.month == today.month && m.date.year == today.year,
-      orElse: () => HealthMetricModel(id: '', userId: '', date: today, type: type, value: 0),
+      (m) =>
+          m.date.day == today.day &&
+          m.date.month == today.month &&
+          m.date.year == today.year,
+      orElse: () => HealthMetricModel(
+          id: '', userId: '', date: today, type: type, value: 0),
     );
 
     return Card(
@@ -35,9 +44,16 @@ class HealthInsightCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Icon(icon, color: const Color(0xFF219EBC)),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -50,7 +66,8 @@ class HealthInsightCard extends StatelessWidget {
                       color: const Color(0xFFFFB703),
                       title: '${todayMetric.value}/$goal',
                       radius: 40,
-                      titleStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.black),
+                      titleStyle: GoogleFonts.poppins(
+                          fontSize: 12, color: Colors.black),
                     ),
                     PieChartSectionData(
                       value: (goal - todayMetric.value).toDouble(),

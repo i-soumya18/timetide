@@ -97,12 +97,11 @@ class AuthService {
     if (user == null) return null;
 
     return UserModel(
-      uid: user.uid,
+      id: user.uid,
+      name: user.displayName ?? '',
       email: user.email ?? '',
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-      createdAt: user.metadata.creationTime ?? DateTime.now(),
-      lastLoginAt: user.metadata.lastSignInTime ?? DateTime.now(),
+      avatarUrl: user.photoURL,
+      isAnonymous: user.isAnonymous,
     );
   }
 }
