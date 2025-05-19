@@ -1,60 +1,35 @@
 class UserModel {
-  final String uid;
+  final String id;
   final String email;
-  final String? displayName;
-  final String? photoURL;
-  final DateTime createdAt;
-  final DateTime lastLoginAt;
-  final Map<String, dynamic>? preferences;
+  final String? name;
+  final String? avatar;
+  final List<String> preferences;
 
   UserModel({
-    required this.uid,
+    required this.id,
     required this.email,
-    this.displayName,
-    this.photoURL,
-    required this.createdAt,
-    required this.lastLoginAt,
-    this.preferences,
+    this.name,
+    this.avatar,
+    this.preferences = const [],
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      uid: json['uid'] as String,
+      id: json['id'] as String,
       email: json['email'] as String,
-      displayName: json['displayName'] as String?,
-      photoURL: json['photoURL'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      lastLoginAt: DateTime.parse(json['lastLoginAt'] as String),
-      preferences: json['preferences'] as Map<String, dynamic>?,
+      name: json['name'] as String?,
+      avatar: json['avatar'] as String?,
+      preferences: List<String>.from(json['preferences'] ?? []),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'uid': uid,
+      'id': id,
       'email': email,
-      'displayName': displayName,
-      'photoURL': photoURL,
-      'createdAt': createdAt.toIso8601String(),
-      'lastLoginAt': lastLoginAt.toIso8601String(),
+      'name': name,
+      'avatar': avatar,
       'preferences': preferences,
     };
-  }
-
-  UserModel copyWith({
-    String? displayName,
-    String? photoURL,
-    DateTime? lastLoginAt,
-    Map<String, dynamic>? preferences,
-  }) {
-    return UserModel(
-      uid: uid,
-      email: email,
-      displayName: displayName ?? this.displayName,
-      photoURL: photoURL ?? this.photoURL,
-      createdAt: createdAt,
-      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
-      preferences: preferences ?? this.preferences,
-    );
   }
 }
