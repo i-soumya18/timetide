@@ -328,8 +328,7 @@ class _TaskInputModalState extends State<TaskInputModal> with SingleTickerProvid
                                 onPrimary: Colors.white,
                                 surface: _surfaceColor,
                                 onSurface: _textColor,
-                              ),
-                              dialogBackgroundColor: _backgroundColor,
+                              ), dialogTheme: DialogThemeData(backgroundColor: _backgroundColor),
                             ),
                             child: child!,
                           );

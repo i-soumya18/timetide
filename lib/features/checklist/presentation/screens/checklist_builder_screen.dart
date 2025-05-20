@@ -621,10 +621,10 @@ class TaskCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            const Color(0xFF1A1A1A),
-            const Color(0xFF222222),
+            Color(0xFF1A1A1A),
+            Color(0xFF222222),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -694,7 +694,7 @@ class TaskCard extends StatelessWidget {
                             ),
                             if (task.time != null) ...[
                               const SizedBox(width: 8),
-                              Icon(
+                              const Icon(
                                 Icons.access_time,
                                 size: 14,
                                 color: Colors.white70,

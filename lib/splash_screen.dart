@@ -98,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
             // Subtle animated particles
             Positioned.fill(
               child: ParticleBackground(
-                color: Color(0xFFA23B72).withOpacity(0.15),
+                color: const Color(0xFFA23B72).withOpacity(0.15),
               ),
             ),
 
@@ -119,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Color(0xFFA23B72).withOpacity(0.3),
+                                  color: const Color(0xFFA23B72).withOpacity(0.3),
                                   blurRadius: 20,
                                   spreadRadius: 5,
                                 ),
@@ -146,7 +146,7 @@ class _SplashScreenState extends State<SplashScreen>
                           Container(
                             width: _lineWidthAnimation.value,
                             height: 2,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.transparent,
@@ -172,7 +172,7 @@ class _SplashScreenState extends State<SplashScreen>
                           Container(
                             width: _lineWidthAnimation.value,
                             height: 2,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
                                   Color(0xFFA23B72),
@@ -215,7 +215,7 @@ class _SplashScreenState extends State<SplashScreen>
 class ParticleBackground extends StatefulWidget {
   final Color color;
 
-  const ParticleBackground({required this.color, Key? key}) : super(key: key);
+  const ParticleBackground({required this.color, super.key});
 
   @override
   State<ParticleBackground> createState() => _ParticleBackgroundState();

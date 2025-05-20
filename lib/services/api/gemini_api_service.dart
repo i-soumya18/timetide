@@ -368,8 +368,7 @@ class GeminiApiService {
         }
 
         return TaskModel(
-          id: DateTime.now().millisecondsSinceEpoch.toString() +
-              '_${task['title']}',
+          id: '${DateTime.now().millisecondsSinceEpoch}_${task['title']}',
           title: task['title'] as String,
           description: task['description'] as String?,
           createdAt: DateTime.now(),

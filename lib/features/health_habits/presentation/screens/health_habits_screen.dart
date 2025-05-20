@@ -184,8 +184,8 @@ class _HealthHabitsScreenState extends State<HealthHabitsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showHabitModal(context),
-        child: const Icon(Icons.add),
         backgroundColor: AppColors.accent,
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -58,7 +58,7 @@ class AuthProvider with ChangeNotifier {
     try {
       _errorMessage = null;
       _user = await _authRepository.signInWithEmail(email, password);
-      _needsProfileSetup = _user?.name == null || _user!.name!.isEmpty;
+      _needsProfileSetup = _user?.name == null || _user!.name.isEmpty;
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -71,7 +71,7 @@ class AuthProvider with ChangeNotifier {
     try {
       _errorMessage = null;
       _user = await _authRepository.signUpWithEmail(email, password, name);
-      _needsProfileSetup = _user?.name == null || _user!.name!.isEmpty;
+      _needsProfileSetup = _user?.name == null || _user!.name.isEmpty;
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -83,7 +83,7 @@ class AuthProvider with ChangeNotifier {
     try {
       _errorMessage = null;
       _user = await _authRepository.signInWithGoogle();
-      _needsProfileSetup = _user?.name == null || _user!.name!.isEmpty;
+      _needsProfileSetup = _user?.name == null || _user!.name.isEmpty;
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();

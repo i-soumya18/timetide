@@ -203,9 +203,9 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
               builder: (context, child) {
                 return Transform.rotate(
                   angle: _animationController.value * 0.05,
-                  child: Icon(
+                  child: const Icon(
                     Icons.filter_list_rounded,
-                    color: const Color(0xFF613DC1),
+                    color: Color(0xFF613DC1),
                   ),
                 );
               },
@@ -265,10 +265,10 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.error_outline_rounded,
                       size: 48,
-                      color: const Color(0xFFA23B72),
+                      color: Color(0xFFA23B72),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -339,10 +339,10 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.notifications_off_outlined,
                         size: 56,
-                        color: const Color(0xFF6564DB),
+                        color: Color(0xFF6564DB),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -493,9 +493,9 @@ class SkeletonReminderCard extends StatefulWidget {
   final int delayMilliseconds;
 
   const SkeletonReminderCard({
-    Key? key,
+    super.key,
     this.delayMilliseconds = 0,
-  }) : super(key: key);
+  });
 
   @override
   State<SkeletonReminderCard> createState() => _SkeletonReminderCardState();

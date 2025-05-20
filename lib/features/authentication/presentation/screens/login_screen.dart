@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ],
               ),
-              child: Center(
+              child: const Center(
                 child: Icon(
                   Icons.check_circle_outline_rounded,
                   size: 48,
@@ -266,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         child: Row(
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline_rounded,
               color: AppColors.error,
               size: 18,
@@ -275,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen>
             Expanded(
               child: Text(
                 errorMessage,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.error,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -455,7 +455,7 @@ class _LoginScreenState extends State<LoginScreen>
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
+              colors: const [
                 AppColors.primaryLight,
                 AppColors.primary,
                 AppColors.primaryDark,

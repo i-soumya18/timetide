@@ -38,11 +38,12 @@ dependencies:
   shared_preferences: ^2.3.0
   http: ^1.2.1
   # Image picker
-  image_picker: ^1.1.2  # Added for avatar selection
-  # Charts
+  image_picker: ^1.1.2  # Added for avatar selection  # Charts
   fl_chart: ^0.68.0
   # Gemini API
   flutter_dotenv: ^5.1.0
+  # Internationalization
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

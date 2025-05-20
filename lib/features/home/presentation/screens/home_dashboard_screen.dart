@@ -226,8 +226,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with SingleTi
           ),
           child: Center(
             child: Text(
-              (authProvider.user?.name?.isNotEmpty == true)
-                  ? authProvider.user!.name![0].toUpperCase()
+              (authProvider.user?.name.isNotEmpty == true)
+                  ? authProvider.user!.name[0].toUpperCase()
                   : 'U',
               style: GoogleFonts.poppins(
                 fontSize: 16,
@@ -265,7 +265,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with SingleTi
   }
 
   Widget _buildSummaryCards(int taskCount, BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 120,
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -447,7 +447,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with SingleTi
                     ],
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: AppColors.textMedium,
                   size: 16,
@@ -589,7 +589,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with SingleTi
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 60,
             height: 60,
             child: CircularProgressIndicator(
@@ -617,7 +617,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with SingleTi
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline_rounded,
               size: 60,
               color: AppColors.error,

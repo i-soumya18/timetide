@@ -65,7 +65,7 @@ class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderSt
 
   IconData _getCategoryIcon() {
     if (widget.reminder.type == 'task') {
-      final category = widget.task?.category?.toLowerCase() ?? '';
+      final category = widget.task?.category.toLowerCase() ?? '';
 
       switch (category) {
         case 'work': return Icons.work_rounded;
@@ -100,12 +100,12 @@ class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderSt
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFF004643), // Primary dark teal
-              const Color(0xFF003459), // Secondary dark blue
+              Color(0xFF004643), // Primary dark teal
+              Color(0xFF003459), // Secondary dark blue
             ],
           ),
           borderRadius: BorderRadius.circular(20),
@@ -210,7 +210,7 @@ class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderSt
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.access_time_rounded,
                               size: 14,
                               color: Colors.white60,

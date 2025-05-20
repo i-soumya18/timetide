@@ -11,7 +11,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final List<String> _goals = ['Productivity', 'Health', 'Study'];
-  List<String> _selectedGoals = [];
+  final List<String> _selectedGoals = [];
   TimeOfDay _wakeUpTime = const TimeOfDay(hour: 7, minute: 0);
   TimeOfDay _bedTime = const TimeOfDay(hour: 23, minute: 0);
   bool _timeBasedReminders = true;

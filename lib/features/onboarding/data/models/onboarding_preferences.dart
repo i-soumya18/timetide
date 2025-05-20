@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show TimeOfDay;
 
 class OnboardingPreferences {
   final List<String> selectedGoals;

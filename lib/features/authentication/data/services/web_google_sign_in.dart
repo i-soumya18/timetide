@@ -3,7 +3,6 @@ import 'dart:html' as html;
 import 'dart:ui_web' as ui;
 import 'dart:js' as js;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 /// A utility class that handles Google Sign In specifically for web platforms.
 class WebGoogleSignIn {

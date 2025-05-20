@@ -11,18 +11,20 @@ class AppColors {
   static const Color accent = Color(0xFFFFB703);
   static const Color accentLight = Color(0xFFFFC833);
   static const Color accentDark = Color(0xFFE6A403);
-
   // Background colors
   static const Color backgroundLight = Color(0xFFFCFCFC);
   static const Color backgroundLightSecondary = Color(0xFFF5F9FA);
   static const Color backgroundDark = Color(0xFF121212);
   static const Color backgroundDarkSecondary = Color(0xFF222222);
-
+  static const Color backgroundMedium = Color(0xFFF0F0F0);
+  static const Color cardBackground = Color(0xFFFFFFFF);
   // Text colors
+  static const Color textDark = Color(0xFF121212);
+  static const Color textLight = Color(0xFFFCFCFC);
+  static const Color textMedium = Color(0xFF757575);
+  static const Color secondaryDark = Color(0xFF424242);
   static const Color textPrimary = Color(0xFF2D3142);
   static const Color textSecondary = Color(0xFF555B6E);
-  static const Color textLight = Color(0xFFF7FAFC);
-  static const Color textDark = Color(0xFF121212);
 
   // Functional colors
   static const Color success = Color(0xFF4CAF50);

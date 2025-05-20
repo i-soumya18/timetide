@@ -61,14 +61,13 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     return ThemeData.dark().copyWith(
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         secondary: AppColors.secondary,
-        surface: const Color(0xFF1F1F1F),
-        background: const Color(0xFF121212),
+        surface: Color(0xFF1F1F1F),
+        background: Color(0xFF121212),
       ),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
-      useMaterial3: true,
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF1F1F1F),
         elevation: 0,
