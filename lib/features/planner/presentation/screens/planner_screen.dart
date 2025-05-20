@@ -1,47 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import 'package:timetide/features/authentication/providers/auth_provider.dart';
 import 'package:timetide/features/planner/providers/planner_provider.dart';
 import '../../data/models/chat_message_model.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/suggestion_card.dart';
-import 'package:flutter/services.dart';
 import 'conversation_history_screen.dart';
 import 'package:intl/intl.dart';
 
-// Using the same premium color palette from the HomeDashboardScreen
+// Premium modern color palette
 class AppColors {
   // Primary colors
-  static const primary = Color(0xFF6C5CE7); // Deep purple/indigo
-  static const primaryLight = Color(0xFF8A7EED); // Lighter purple
-  static const primaryDark = Color(0xFF5549C7); // Darker purple
+  static const primary = Color(0xFF613DC1); // Deep Indigo
+  static const primaryLight = Color(0xFF7752E3); // Royal Purple
+  static const primaryDark = Color(0xFF4C2F9B); // Dark Indigo
 
   // Secondary colors
-  static const secondary = Color(0xFF2D3436); // Near black
-  static const secondaryLight = Color(0xFF3D4548); // Dark grey
-  static const secondaryDark = Color(0xFF1E2224); // Darker grey
+  static const secondary = Color(0xFF121214); // Near Black
+  static const secondaryLight = Color(0xFF1E1E24); // Dark Charcoal
+  static const secondaryDark = Color(0xFF2D2D34); // Slate Gray
 
   // Accent colors
-  static const accent = Color(0xFFFD79A8); // Pink
-  static const accentLight = Color(0xFFFD9CB6); // Light pink
-  static const accentDark = Color(0xFFD66390); // Dark pink
+  static const accent = Color(0xFF00C2CB); // Teal
+  static const accentSecondary = Color(0xFFA23B72); // Rose
+  static const accentTertiary = Color(0xFFFFBF49); // Amber
 
   // Background colors
-  static const backgroundDark = Color(0xFF121212); // Dark background
-  static const backgroundMedium = Color(0xFF1E1E1E); // Medium dark background
-  static const cardBackground = Color(0xFF252525); // Card background
+  static const backgroundDark = Color(0xFF121214); // Dark background
+  static const backgroundMedium = Color(0xFF1E1E24); // Medium dark background
+  static const cardBackground = Color(0xFF2D2D34); // Card background
 
   // Text colors
-  static const textLight = Color(0xFFF5F5F5); // Light text
-  static const textMedium = Color(0xFFBDBDBD); // Medium text
-  static const textDark = Color(0xFF757575); // Dark text
+  static const textLight = Color(0xFFF7F7F9); // Light text
+  static const textMedium = Color(0xFFBBBBC9); // Medium text
+  static const textDark = Color(0xFF81818E); // Dark text
 
   // Status colors
-  static const success = Color(0xFF00B894); // Success green
-  static const warning = Color(0xFFFFD166); // Warning yellow
-  static const error = Color(0xFFFF6B6B); // Error red
-  static const info = Color(0xFF54A0FF); // Info blue
+  static const success = Color(0xFF4AC16B); // Success green
+  static const warning = Color(0xFFFFBF49); // Warning amber
+  static const error = Color(0xFFF45866); // Error red
+  static const info = Color(0xFF3DA9FC); // Info blue
+}
+
+// Add this extension to create gradient effects
+extension ColorExtension on Color {
+  Color darken([double amount = 0.1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return hslDark.toColor();
+  }
+
+  Color lighten([double amount = 0.1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslLight =
+        hsl.withLightness((hsl.lightness + amount).clamp(0.0, 1.0));
+    return hslLight.toColor();
+  }
 }
 
 class PlannerScreen extends StatefulWidget {
@@ -57,8 +75,17 @@ class _PlannerScreenState extends State<PlannerScreen>
   final ScrollController _scrollController = ScrollController();
   late AnimationController _sendButtonController;
   late AnimationController _typingController;
+  late AnimationController _inputFocusController;
+  late AnimationController _screenTransitionController;
+
+  // Focus node for input field
+  final FocusNode _inputFocusNode = FocusNode();
+
   bool _isComposing = false;
   bool _isThinking = false;
+
+  // Track if input field is focused
+  bool _isInputFocused = false;
 
   @override
   void initState() {
@@ -66,15 +93,29 @@ class _PlannerScreenState extends State<PlannerScreen>
     final plannerProvider =
         Provider.of<PlannerProvider>(context, listen: false);
 
+    // Animated transition when screen loads
+    _screenTransitionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..forward();
+
+    // Send button animation controller
     _sendButtonController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
 
+    // Typing indicator animation controller
     _typingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat();
+
+    // Input field focus animation controller
+    _inputFocusController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
 
     // Listen for errors
     plannerProvider.addListener(() {
@@ -103,6 +144,19 @@ class _PlannerScreenState extends State<PlannerScreen>
         _sendButtonController.reverse();
       }
     });
+
+    // Track input field focus
+    _inputFocusNode.addListener(() {
+      setState(() {
+        _isInputFocused = _inputFocusNode.hasFocus;
+      });
+
+      if (_isInputFocused) {
+        _inputFocusController.forward();
+      } else {
+        _inputFocusController.reverse();
+      }
+    });
   }
 
   @override
@@ -111,6 +165,9 @@ class _PlannerScreenState extends State<PlannerScreen>
     _scrollController.dispose();
     _sendButtonController.dispose();
     _typingController.dispose();
+    _inputFocusController.dispose();
+    _screenTransitionController.dispose();
+    _inputFocusNode.dispose();
     super.dispose();
   }
 
@@ -133,8 +190,8 @@ class _PlannerScreenState extends State<PlannerScreen>
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        backgroundColor: AppColors.error.withOpacity(0.9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: AppColors.error.withOpacity(0.95),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Row(
           children: [
             const Icon(Icons.error_outline, color: Colors.white),
@@ -151,6 +208,7 @@ class _PlannerScreenState extends State<PlannerScreen>
           ],
         ),
         duration: const Duration(seconds: 4),
+        elevation: 6,
       ),
     );
   }
@@ -161,8 +219,8 @@ class _PlannerScreenState extends State<PlannerScreen>
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        backgroundColor: AppColors.success.withOpacity(0.9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: AppColors.success.withOpacity(0.95),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Row(
           children: [
             const Icon(Icons.check_circle_outline, color: Colors.white),
@@ -173,12 +231,18 @@ class _PlannerScreenState extends State<PlannerScreen>
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ],
         ),
         duration: const Duration(seconds: 2),
+        elevation: 6,
+        animation: CurvedAnimation(
+          parent: const AlwaysStoppedAnimation(1),
+          curve: Curves.fastOutSlowIn,
+        ),
       ),
     );
   }
@@ -194,66 +258,102 @@ class _PlannerScreenState extends State<PlannerScreen>
       statusBarIconBrightness: Brightness.light,
     ));
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      appBar: _buildAppBar(),
-      drawer: _buildConversationHistoryDrawer(authProvider, plannerProvider),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.backgroundDark,
-              AppColors.backgroundMedium.withOpacity(0.9),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+    // Apply screen transition animation
+    return AnimatedBuilder(
+      animation: _screenTransitionController,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _screenTransitionController,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.05),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: _screenTransitionController,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
           ),
-        ),
-        child: Column(
-          children: [
-            // Welcome card - only show if there are no messages
-            StreamBuilder<List<ChatMessageModel>>(
-              stream: plannerProvider.getChatHistory(authProvider.user!.id),
-              builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data!.isEmpty) {
-                  return _buildWelcomeCard();
-                }
-                return const SizedBox.shrink();
-              },
+        );
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        appBar: _buildAppBar(),
+        drawer: _buildConversationHistoryDrawer(authProvider, plannerProvider),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.backgroundDark,
+                AppColors.backgroundMedium.withOpacity(0.95),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-
-            // Chat messages
-            Expanded(
-              child: StreamBuilder<List<ChatMessageModel>>(
-                stream: plannerProvider.getChatHistory(authProvider.user!.id,
-                    conversationId: plannerProvider.currentConversationId),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return _buildErrorState(snapshot.error.toString());
-                  }
-
-                  if (!snapshot.hasData) {
-                    return _buildLoadingState();
-                  }
-
-                  final messages = snapshot.data!;
-
-                  if (messages.isEmpty) {
-                    return _buildEmptyState();
-                  }
-
-                  return _buildChatList(
-                      messages, authProvider, plannerProvider);
-                },
+          ),
+          child: Stack(
+            children: [
+              // Subtle background pattern
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: Image.asset(
+                    'assets/images/pattern.png',
+                    repeat: ImageRepeat.repeat,
+                  ),
+                ),
               ),
-            ),
+              Column(
+                children: [
+                  // Welcome card - only show if there are no messages
+                  StreamBuilder<List<ChatMessageModel>>(
+                    stream:
+                        plannerProvider.getChatHistory(authProvider.user!.id),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData && snapshot.data!.isEmpty) {
+                        return _buildWelcomeCard();
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
-            // "AI is typing" indicator
-            if (_isThinking) _buildTypingIndicator(),
+                  // Chat messages
+                  Expanded(
+                    child: StreamBuilder<List<ChatMessageModel>>(
+                      stream: plannerProvider.getChatHistory(
+                          authProvider.user!.id,
+                          conversationId:
+                              plannerProvider.currentConversationId),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return _buildErrorState(snapshot.error.toString());
+                        }
 
-            // Chat input
-            _buildChatInput(authProvider, plannerProvider),
-          ],
+                        if (!snapshot.hasData) {
+                          return _buildLoadingState();
+                        }
+
+                        final messages = snapshot.data!;
+
+                        if (messages.isEmpty) {
+                          return _buildEmptyState();
+                        }
+
+                        return _buildChatList(
+                            messages, authProvider, plannerProvider);
+                      },
+                    ),
+                  ),
+
+                  // "AI is typing" indicator
+                  if (_isThinking) _buildTypingIndicator(),
+
+                  // Chat input
+                  _buildChatInput(authProvider, plannerProvider),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -266,25 +366,44 @@ class _PlannerScreenState extends State<PlannerScreen>
       title: Row(
         children: [
           Container(
-            height: 36,
-            width: 36,
+            height: MediaQuery.of(context).size.width * 0.09,
+            width: MediaQuery.of(context).size.width * 0.09,
             decoration: BoxDecoration(
-              color: AppColors.info.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.accent,
+                  AppColors.accent.darken(0.15),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(
+                  MediaQuery.of(context).size.width * 0.03),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.smart_toy_rounded,
-              color: AppColors.info,
-              size: 20,
+              color: Colors.white,
+              size: MediaQuery.of(context).size.width * 0.055,
             ),
           ),
-          const SizedBox(width: 12),
-          Text(
-            'AI Planner',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textLight,
+          SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+          Flexible(
+            child: Text(
+              'AI Planner',
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: MediaQuery.of(context).size.width * 0.048,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textLight,
+                letterSpacing: 0.3,
+              ),
             ),
           ),
         ],
@@ -296,8 +415,23 @@ class _PlannerScreenState extends State<PlannerScreen>
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const ConversationHistoryScreen(),
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const ConversationHistoryScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.05),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                transitionDuration: const Duration(milliseconds: 350),
               ),
             );
           },
@@ -314,23 +448,42 @@ class _PlannerScreenState extends State<PlannerScreen>
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
+                backgroundColor: AppColors.secondaryLight,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 title: Text(
                   'Start New Conversation',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
+                    fontSize: 18,
                   ),
                 ),
                 content: Text(
                   'This will start a new conversation while preserving your history. Continue?',
-                  style: GoogleFonts.poppins(),
+                  style: GoogleFonts.poppins(
+                    color: AppColors.textLight,
+                    fontSize: 15,
+                  ),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textMedium,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                    ),
                     child: Text(
                       'Cancel',
-                      style: GoogleFonts.poppins(color: AppColors.textDark),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   ElevatedButton(
@@ -342,10 +495,19 @@ class _PlannerScreenState extends State<PlannerScreen>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
                     ),
                     child: Text(
                       'Start New',
-                      style: GoogleFonts.poppins(),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ],
@@ -366,35 +528,73 @@ class _PlannerScreenState extends State<PlannerScreen>
   Widget _buildFinalizeButton() {
     final plannerProvider = Provider.of<PlannerProvider>(context);
     final selectedCount = plannerProvider.selectedTasks.length;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: ElevatedButton.icon(
-        icon: const Icon(
-          Icons.checklist_rounded,
-          size: 18,
-        ),
-        label: Text(
-          selectedCount > 0 ? 'Finalize ($selectedCount)' : 'Finalize',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
+      padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.02, vertical: screenWidth * 0.02),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: selectedCount > 0
+                ? [
+                    AppColors.success,
+                    AppColors.success.darken(0.1),
+                  ]
+                : [
+                    AppColors.primaryLight.withOpacity(0.8),
+                    AppColors.primary.withOpacity(0.8),
+                  ],
           ),
+          borderRadius: BorderRadius.circular(screenWidth * 0.03),
+          boxShadow: selectedCount > 0
+              ? [
+                  BoxShadow(
+                    color: AppColors.success.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : [],
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: selectedCount > 0
-              ? AppColors.success
-              : AppColors.primaryLight.withOpacity(0.7),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+        child: ElevatedButton.icon(
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+            child: Icon(
+              selectedCount > 0
+                  ? Icons.checklist_rounded
+                  : Icons.checklist_outlined,
+              size: 18,
+              key: ValueKey<bool>(selectedCount > 0),
+            ),
           ),
+          label: Text(
+            selectedCount > 0 ? 'Finalize ($selectedCount)' : 'Finalize',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              letterSpacing: 0.3,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: selectedCount > 0
+              ? () => _showFinalizationDialog()
+              : () => _showSelectionInstructions(),
         ),
-        onPressed: selectedCount > 0
-            ? () => _showFinalizationDialog()
-            : () => _showSelectionInstructions(),
       ),
     );
   }
@@ -405,8 +605,8 @@ class _PlannerScreenState extends State<PlannerScreen>
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        backgroundColor: AppColors.info.withOpacity(0.9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: AppColors.info.withOpacity(0.95),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Row(
           children: [
             const Icon(Icons.info_outline, color: Colors.white),
@@ -423,6 +623,10 @@ class _PlannerScreenState extends State<PlannerScreen>
           ],
         ),
         duration: const Duration(seconds: 3),
+        animation: CurvedAnimation(
+          parent: const AlwaysStoppedAnimation(1),
+          curve: Curves.fastOutSlowIn,
+        ),
       ),
     );
   }
@@ -522,9 +726,14 @@ class _PlannerScreenState extends State<PlannerScreen>
   }
 
   Widget _buildWelcomeCard() {
+    final screenSize = MediaQuery.of(context).size;
+    final horizontalPadding = screenSize.width * 0.04;
+    final verticalPadding = screenSize.height * 0.02;
+
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(
+          horizontal: horizontalPadding, vertical: verticalPadding),
+      padding: EdgeInsets.all(screenSize.width * 0.04),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -534,7 +743,7 @@ class _PlannerScreenState extends State<PlannerScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(screenSize.width * 0.04),
         boxShadow: [
           BoxShadow(
             color: AppColors.primaryDark.withOpacity(0.3),
@@ -592,6 +801,13 @@ class _PlannerScreenState extends State<PlannerScreen>
   }
 
   Widget _buildSuggestionChip(String text, IconData icon) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Adjust font and padding based on screen width
+    final fontSize = screenWidth < 360 ? 10.0 : 12.0;
+    final horizontalPadding = screenWidth * 0.03;
+    final verticalPadding = screenWidth * 0.02;
+    final iconSize = screenWidth * 0.04;
+
     return InkWell(
       onTap: () {
         _controller.text = text;
@@ -600,12 +816,13 @@ class _PlannerScreenState extends State<PlannerScreen>
         });
         _sendButtonController.forward();
       },
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(screenWidth * 0.08),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding, vertical: verticalPadding),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(screenWidth * 0.08),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -613,14 +830,14 @@ class _PlannerScreenState extends State<PlannerScreen>
             Icon(
               icon,
               color: AppColors.textLight,
-              size: 16,
+              size: iconSize,
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: screenWidth * 0.015),
             Text(
               text,
               style: GoogleFonts.poppins(
                 color: AppColors.textLight,
-                fontSize: 12,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -877,8 +1094,14 @@ class _PlannerScreenState extends State<PlannerScreen>
     AuthProvider authProvider,
     PlannerProvider plannerProvider,
   ) {
+    final screenSize = MediaQuery.of(context).size;
+    final horizontalPadding = screenSize.width * 0.04;
+    final verticalPaddingTop = screenSize.height * 0.015;
+    final verticalPaddingBottom = screenSize.height * 0.025;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, verticalPaddingTop,
+          horizontalPadding, verticalPaddingBottom),
       decoration: BoxDecoration(
         color: AppColors.backgroundMedium.withOpacity(0.9),
         boxShadow: [
@@ -1057,14 +1280,17 @@ class _PlannerScreenState extends State<PlannerScreen>
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.04),
           ElevatedButton.icon(
             icon: const Icon(Icons.lightbulb_outline),
             label: const Text('Try a suggestion'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width * 0.06,
+                vertical: MediaQuery.of(context).size.height * 0.015,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
