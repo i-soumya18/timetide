@@ -147,10 +147,8 @@ class _HealthHabitsScreenState extends State<HealthHabitsScreen> with SingleTick
     final titleAnimation = CurvedAnimation(
       parent: _animationController,
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
-    );
-
-    return Scaffold(
-      backgroundColor: Colors.black,
+    );    return Scaffold(
+      backgroundColor: AppColors.cardBg, // Using Rich Dark Blue from local AppColors
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: FadeTransition(
