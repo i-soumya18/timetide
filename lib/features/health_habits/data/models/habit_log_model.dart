@@ -31,16 +31,22 @@ class HabitLogModel {
       'completed': completed,
     };
   }
-  
+
   // Add operator [] to allow accessing properties like a map
   dynamic operator [](String key) {
     switch (key) {
-      case 'id': return id;
-      case 'userId': return userId;
-      case 'habitId': return habitId;
-      case 'date': return date;
-      case 'completed': return completed;
-      default: return null;
+      case 'id':
+        return id;
+      case 'userId':
+        return userId;
+      case 'habitId':
+        return habitId;
+      case 'date':
+        return date;
+      case 'completed':
+        return completed;
+      default:
+        return null;
     }
   }
 }

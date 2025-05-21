@@ -30,7 +30,8 @@ class ReminderCard extends StatefulWidget {
   State<ReminderCard> createState() => _ReminderCardState();
 }
 
-class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderStateMixin {
+class _ReminderCardState extends State<ReminderCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
@@ -68,11 +69,16 @@ class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderSt
       final category = widget.task?.category.toLowerCase() ?? '';
 
       switch (category) {
-        case 'work': return Icons.work_rounded;
-        case 'personal': return Icons.person_rounded;
-        case 'health': return Icons.favorite_rounded;
-        case 'education': return Icons.school_rounded;
-        default: return Icons.assignment_rounded;
+        case 'work':
+          return Icons.work_rounded;
+        case 'personal':
+          return Icons.person_rounded;
+        case 'health':
+          return Icons.favorite_rounded;
+        case 'education':
+          return Icons.school_rounded;
+        default:
+          return Icons.assignment_rounded;
       }
     } else {
       return Icons.repeat_rounded;
@@ -95,25 +101,43 @@ class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderSt
         : 'Habit • Streak: ${widget.habit?.streak ?? 0}';
     final typeColor = _getTypeColor();
 
+    // Define colors based on the provided premium color palette
+    final Color cardBackground1 = const Color(0xFF004643); // Dark teal
+    final Color cardBackground2 = const Color(0xFF003459); // Deep blue
+    final Color accentColor = widget.reminder.type == 'task'
+        ? const Color(0xFF6564DB) // Purple accent for tasks
+        : const Color(0xFFA23B72); // Pink accent for habits
+
     return ScaleTransition(
       scale: _scaleAnimation,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF004643), // Primary dark teal
-              Color(0xFF003459), // Secondary dark blue
+              cardBackground1,
+              cardBackground2,
             ],
           ),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: accentColor.withOpacity(0.3),
+            width: 1.0,
+          ),
           boxShadow: [
             BoxShadow(
-              color: typeColor.withOpacity(0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: accentColor.withOpacity(0.2),
+              blurRadius: 16,
+              spreadRadius: 0.5,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 4,
+              spreadRadius: 0,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -122,26 +146,39 @@ class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderSt
           child: InkWell(
             onTap: widget.onEdit,
             borderRadius: BorderRadius.circular(20),
-            splashColor: typeColor.withOpacity(0.1),
-            highlightColor: typeColor.withOpacity(0.05),
+            splashColor: accentColor.withOpacity(0.15),
+            highlightColor: accentColor.withOpacity(0.05),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               child: Row(
                 children: [
-                  // Type indicator and icon
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: typeColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      _getCategoryIcon(),
-                      color: typeColor,
-                      size: 28,
-                    ),
-                  ),
+                  // Enhanced type indicator with animated shadow
+                  TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.8, end: 1.0),
+                      duration: const Duration(milliseconds: 1500),
+                      curve: Curves.easeInOut,
+                      builder: (context, value, child) {
+                        return Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: accentColor.withOpacity(0.2 * value),
+                                blurRadius: 10 * value,
+                                spreadRadius: 0.5 * value,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _getCategoryIcon(),
+                            color: accentColor,
+                            size: 30,
+                          ),
+                        );
+                      }),
                   const SizedBox(width: 16),
 
                   // Content
@@ -163,13 +200,16 @@ class _ReminderCardState extends State<ReminderCard> with SingleTickerProviderSt
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: typeColor.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                widget.reminder.type == 'task' ? 'TASK' : 'HABIT',
+                                widget.reminder.type == 'task'
+                                    ? 'TASK'
+                                    : 'HABIT',
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,

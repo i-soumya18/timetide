@@ -132,33 +132,51 @@ class TaskModel {
       completedAt: completedAt ?? this.completedAt,
     );
   }
+
   TaskModel markAsCompleted() {
     return copyWith(
       status: TaskStatus.completed,
       completedAt: DateTime.now(),
     );
   }
-  
+
   // Add operator [] to allow accessing properties like a map
   dynamic operator [](String key) {
     switch (key) {
-      case 'id': return id;
-      case 'title': return title;
-      case 'description': return description;
-      case 'createdAt': return createdAt;
-      case 'dueDate': return dueDate;
-      case 'userId': return userId;
-      case 'priority': return priority;
-      case 'status': return status;
-      case 'category': return category;
-      case 'isAiGenerated': return isAiGenerated;
-      case 'subtasks': return subtasks;
-      case 'attachments': return attachments;
-      case 'reminderTimes': return reminderTimes;
-      case 'location': return location;
-      case 'completedAt': return completedAt;
-      case 'completed': return isCompleted; // Map 'completed' to isCompleted getter
-      default: return null;
+      case 'id':
+        return id;
+      case 'title':
+        return title;
+      case 'description':
+        return description;
+      case 'createdAt':
+        return createdAt;
+      case 'dueDate':
+        return dueDate;
+      case 'userId':
+        return userId;
+      case 'priority':
+        return priority;
+      case 'status':
+        return status;
+      case 'category':
+        return category;
+      case 'isAiGenerated':
+        return isAiGenerated;
+      case 'subtasks':
+        return subtasks;
+      case 'attachments':
+        return attachments;
+      case 'reminderTimes':
+        return reminderTimes;
+      case 'location':
+        return location;
+      case 'completedAt':
+        return completedAt;
+      case 'completed':
+        return isCompleted; // Map 'completed' to isCompleted getter
+      default:
+        return null;
     }
   }
 }

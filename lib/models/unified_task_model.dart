@@ -94,20 +94,30 @@ class UnifiedTaskModel {
       'userId': userId,
     };
   }
-  
+
   // Add operator [] to allow accessing properties like a map
   dynamic operator [](String key) {
     switch (key) {
-      case 'id': return id;
-      case 'title': return title;
-      case 'category': return category;
-      case 'time': return time;
-      case 'priority': return priority;
-      case 'completed': return completed;
-      case 'completedToday': return completed; // For compatibility with habits code
-      case 'order': return order;
-      case 'userId': return userId;
-      default: return null;
+      case 'id':
+        return id;
+      case 'title':
+        return title;
+      case 'category':
+        return category;
+      case 'time':
+        return time;
+      case 'priority':
+        return priority;
+      case 'completed':
+        return completed;
+      case 'completedToday':
+        return completed; // For compatibility with habits code
+      case 'order':
+        return order;
+      case 'userId':
+        return userId;
+      default:
+        return null;
     }
   }
 }

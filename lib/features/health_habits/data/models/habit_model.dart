@@ -37,7 +37,8 @@ class HabitModel {
       streak: json['streak'] ?? 0,
       frequency: frequencyList,
     );
-  }  Map<String, dynamic> toJson() {
+  }
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
       'userId': userId,
@@ -49,18 +50,26 @@ class HabitModel {
       'frequency': frequency,
     };
   }
-  
+
   // Add operator [] to allow accessing properties like a map
   dynamic operator [](String key) {
     switch (key) {
-      case 'id': return id;
-      case 'userId': return userId;
-      case 'name': return name;
-      case 'reminderTime': return reminderTime;
-      case 'streak': return streak;
-      case 'frequency': return frequency;
-      case 'completedToday': return false; // Default value when accessed like a map
-      default: return null;
+      case 'id':
+        return id;
+      case 'userId':
+        return userId;
+      case 'name':
+        return name;
+      case 'reminderTime':
+        return reminderTime;
+      case 'streak':
+        return streak;
+      case 'frequency':
+        return frequency;
+      case 'completedToday':
+        return false; // Default value when accessed like a map
+      default:
+        return null;
     }
   }
 }
