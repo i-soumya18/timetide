@@ -129,16 +129,16 @@ class _LoginScreenState extends State<LoginScreen>
                 Text(
                   'Welcome Back',
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Sign in to continue',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
+                    color: Colors.white.withOpacity(0.8),
+                  ),
                 ),
               ],
             ),
@@ -213,18 +213,18 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   suffixIcon: isPassword
                       ? IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.white.withOpacity(0.8),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        )
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  )
                       : null,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
@@ -238,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen>
                 onEditingComplete: isPassword
                     ? _unfocus
                     : () =>
-                        FocusScope.of(context).requestFocus(_passwordFocusNode),
+                    FocusScope.of(context).requestFocus(_passwordFocusNode),
               ),
             ),
           ),

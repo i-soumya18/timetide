@@ -22,7 +22,6 @@ class HabitLogModel {
       completed: json['completed'] ?? false,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -31,5 +30,17 @@ class HabitLogModel {
       'date': date.toIso8601String(),
       'completed': completed,
     };
+  }
+  
+  // Add operator [] to allow accessing properties like a map
+  dynamic operator [](String key) {
+    switch (key) {
+      case 'id': return id;
+      case 'userId': return userId;
+      case 'habitId': return habitId;
+      case 'date': return date;
+      case 'completed': return completed;
+      default: return null;
+    }
   }
 }

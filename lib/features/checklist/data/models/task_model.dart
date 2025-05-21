@@ -27,8 +27,7 @@ class TaskModel {
     String? priority,
     bool? completed,
     int? order,
-    String? userId,
-  }) {
+    String? userId,  }) {
     return TaskModel(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -39,6 +38,21 @@ class TaskModel {
       order: order ?? this.order,
       userId: userId ?? this.userId,
     );
+  }
+  
+  // Add operator [] to allow accessing properties like a map
+  dynamic operator [](String key) {
+    switch (key) {
+      case 'id': return id;
+      case 'title': return title;
+      case 'category': return category;
+      case 'time': return time;
+      case 'priority': return priority;
+      case 'completed': return completed;
+      case 'order': return order;
+      case 'userId': return userId;
+      default: return null;
+    }
   }
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {

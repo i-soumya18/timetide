@@ -14,8 +14,21 @@ class TaskModel {
     this.time,
     this.priority = 'Medium',
     this.completed = false,
-    this.order = 0,
-  });
+    this.order = 0,  });
+
+  // Add operator [] to allow accessing properties like a map
+  dynamic operator [](String key) {
+    switch (key) {
+      case 'id': return id;
+      case 'title': return title;
+      case 'category': return category;
+      case 'time': return time;
+      case 'priority': return priority;
+      case 'completed': return completed;
+      case 'order': return order;
+      default: return null;
+    }
+  }
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
     return TaskModel(

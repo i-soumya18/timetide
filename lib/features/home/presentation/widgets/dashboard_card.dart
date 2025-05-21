@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:ui';
-import 'package:flutter/services.dart';
 
 class DashboardCard extends StatefulWidget {
   final String title;
+  final String? subtitle;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final String? subtitle;
-  final bool isNew;
+  final int index;
+  final bool showBadge;
+  final String? badgeText;
 
   const DashboardCard({
     super.key,
     required this.title,
+    this.subtitle,
     required this.icon,
     required this.color,
     required this.onTap,
-    this.subtitle,
-    this.isNew = false,
+    this.index = 0,
+    this.showBadge = false,
+    this.badgeText,
   });
 
   @override
@@ -26,148 +28,162 @@ class DashboardCard extends StatefulWidget {
 }
 
 class _DashboardCardState extends State<DashboardCard> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+  late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _rotateAnimation;
   bool _isPressed = false;
-
-  // Shadow configuration
-  List<BoxShadow> get _cardShadow => [
-    BoxShadow(
-      color: widget.color.withOpacity(0.3),
-      blurRadius: 12,
-      offset: const Offset(0, 6),
-      spreadRadius: -2,
-    ),
-    BoxShadow(
-      color: Colors.black.withOpacity(0.1),
-      blurRadius: 4,
-      offset: const Offset(0, 2),
-      spreadRadius: 0,
-    ),
-  ];
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
       vsync: this,
-      duration: const Duration(milliseconds: 150),
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _rotateAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.02,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  // Generate second color for gradient based on main color
-  Color _generateSecondaryColor(Color baseColor) {
-    // Create a secondary color that's slightly darker and shifted in hue
-    HSLColor hslColor = HSLColor.fromColor(baseColor);
-    HSLColor secondaryHslColor = HSLColor.fromAHSL(
-      hslColor.alpha,
-      (hslColor.hue + 15) % 360, // Shift hue slightly
-      hslColor.saturation * 0.9, // Slightly less saturated
-      hslColor.lightness * 0.85, // Slightly darker
-    );
-    return secondaryHslColor.toColor();
+  void _onTapDown(TapDownDetails details) {
+    _controller.forward();
+    setState(() {
+      _isPressed = true;
+    });
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    _controller.reverse();
+    setState(() {
+      _isPressed = false;
+    });
+    widget.onTap();
+  }
+
+  void _onTapCancel() {
+    _controller.reverse();
+    setState(() {
+      _isPressed = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Generate a complementary darker color for the gradient
-    final Color secondaryColor = _generateSecondaryColor(widget.color);
-
-    // Glow effect animation
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: child,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 800 + (widget.index * 100)),
+      curve: Curves.easeOutQuint,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 40 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
         );
       },
-      child: GestureDetector(
-        onTapDown: (_) {
-          setState(() => _isPressed = true);
-          _animationController.forward();
-          HapticFeedback.lightImpact();
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Transform.rotate(
+              angle: _rotateAnimation.value,
+              child: child,
+            ),
+          );
         },
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          _animationController.reverse();
-        },
-        onTapCancel: () {
-          setState(() => _isPressed = false);
-          _animationController.reverse();
-        },
-        onTap: () {
-          widget.onTap();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutQuart,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: _isPressed ? [] : _cardShadow,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: GestureDetector(
+          onTapDown: _onTapDown,
+          onTapUp: _onTapUp,
+          onTapCancel: _onTapCancel,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withOpacity(_isPressed ? 0.4 : 0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                  spreadRadius: -2,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+            child: Card(
+              elevation: 0,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               child: Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   gradient: LinearGradient(
                     colors: [
-                      secondaryColor,
+                      widget.color.withOpacity(0.9),
                       widget.color,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    stops: const [0.2, 1.0],
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.15),
-                    width: 1.5,
                   ),
                 ),
                 child: Stack(
                   children: [
-                    // Background pattern (subtle grid)
-                    Positioned.fill(
-                      child: Opacity(
-                        opacity: 0.07,
-                        child: CustomPaint(
-                          painter: GridPainter(),
-                        ),
+                    // Background decoration
+                    Positioned(
+                      bottom: -15,
+                      right: -15,
+                      child: Icon(
+                        widget.icon,
+                        size: 80,
+                        color: Colors.white.withOpacity(0.1),
                       ),
                     ),
 
-                    // Main content
+                    // Content
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Icon with container
+                        // Icon with glowing effect
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
-                              width: 1,
-                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: widget.color.withOpacity(0.4),
+                                blurRadius: _isPressed ? 20 : 10,
+                                spreadRadius: _isPressed ? 2 : 0,
+                              ),
+                            ],
                           ),
                           child: Icon(
                             widget.icon,
@@ -175,106 +191,85 @@ class _DashboardCardState extends State<DashboardCard> with SingleTickerProvider
                             color: Colors.white,
                           ),
                         ),
-
                         const SizedBox(height: 16),
 
-                        // Card title with optional "NEW" tag
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                widget.title,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (widget.isNew)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'NEW',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-
-                        // Optional subtitle
-                        if (widget.subtitle != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.subtitle!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white.withOpacity(0.7),
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-
-                        const SizedBox(height: 16),
-
-                        // Action indicator
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        // Title with optional subtitle
+                        widget.subtitle != null
+                            ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Explore',
+                              widget.title,
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.3,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 14,
-                              color: Colors.white.withOpacity(0.9),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.subtitle!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
                             ),
                           ],
+                        )
+                            : Text(
+                          widget.title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+
+                        // Animated indicator for interaction
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.only(top: 12),
+                          width: _isPressed ? 40 : 30,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ],
                     ),
 
-                    // Shine effect overlay (subtle gradient)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 40,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.white.withOpacity(0.1),
-                              Colors.white.withOpacity(0.0),
+                    // Optional badge
+                    if (widget.showBadge)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
                             ],
                           ),
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24),
+                          child: Text(
+                            widget.badgeText ?? '',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: widget.color,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -286,27 +281,54 @@ class _DashboardCardState extends State<DashboardCard> with SingleTickerProvider
   }
 }
 
-// Custom painter for subtle grid pattern
-class GridPainter extends CustomPainter {
+// Usage example:
+class DashboardGridExample extends StatelessWidget {
+  const DashboardGridExample({super.key});
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 0.5;
-
-    // Draw vertical lines
-    const double spacing = 15;
-    for (double i = 0; i < size.width; i += spacing) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    }
-
-    // Draw horizontal lines
-    for (double i = 0; i < size.height; i += spacing) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-    }
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      childAspectRatio: 1,
+      padding: const EdgeInsets.all(16),
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        DashboardCard(
+          index: 0,
+          title: 'Tasks',
+          subtitle: '5 pending',
+          icon: Icons.task_alt_rounded,
+          color: const Color(0xFF613DC1), // Purple
+          onTap: () {},
+          showBadge: true,
+          badgeText: 'New',
+        ),
+        DashboardCard(
+          index: 1,
+          title: 'Calendar',
+          icon: Icons.calendar_today_rounded,
+          color: const Color(0xFF004643), // Teal
+          onTap: () {},
+        ),
+        DashboardCard(
+          index: 2,
+          title: 'Health',
+          subtitle: 'Track your progress',
+          icon: Icons.favorite_rounded,
+          color: const Color(0xFFA23B72), // Rose
+          onTap: () {},
+        ),
+        DashboardCard(
+          index: 3,
+          title: 'Analytics',
+          icon: Icons.analytics_rounded,
+          color: const Color(0xFF6564DB), // Blue Purple
+          onTap: () {},
+        ),
+      ],
+    );
   }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-
