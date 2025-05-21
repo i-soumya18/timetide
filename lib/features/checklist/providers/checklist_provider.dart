@@ -31,7 +31,8 @@ class ChecklistProvider with ChangeNotifier {
         parameters: {
           'category': task.category,
           'priority': task.priority,
-          'has_time': task.time != null,
+          'has_time':
+              task.time != null ? "true" : "false", // Convert boolean to string
         },
       );
       if (task.time != null) {
@@ -60,7 +61,8 @@ class ChecklistProvider with ChangeNotifier {
         parameters: {
           'category': task.category,
           'priority': task.priority,
-          'has_time': task.time != null,
+          'has_time':
+              task.time != null ? "true" : "false", // Convert boolean to string
         },
       );
       if (task.time != null) {
@@ -101,8 +103,10 @@ class ChecklistProvider with ChangeNotifier {
         parameters: {
           'category': task.category,
           'priority': task.priority,
-          'has_time': task.time != null,
-          'is_completed': task.completed,
+          'has_time':
+              task.time != null ? "true" : "false", // Convert boolean to string
+          'is_completed':
+              task.completed ? "true" : "false", // Convert boolean to string
         },
       );
       notifyListeners();

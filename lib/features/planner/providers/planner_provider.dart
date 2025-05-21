@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:timetide/features/checklist/data/models/task_model.dart';
 import 'package:timetide/features/checklist/data/repositories/checklist_repository.dart';
 import 'package:timetide/features/planner/data/models/chat_message_model.dart';
@@ -23,8 +22,10 @@ class PlannerProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get currentConversationId => _currentConversationId;
   bool get isProcessing => _isProcessing;
-  Map<String, Map<String, dynamic>> get selectedTasks => Map.unmodifiable(_selectedTasks);
-  Map<String, Map<String, dynamic>> get finalizedTasks => Map.unmodifiable(_finalizedTasks);
+  Map<String, Map<String, dynamic>> get selectedTasks =>
+      Map.unmodifiable(_selectedTasks);
+  Map<String, Map<String, dynamic>> get finalizedTasks =>
+      Map.unmodifiable(_finalizedTasks);
 
   /// Retrieves chat history for a user, optionally filtered by conversation ID.
   Stream<List<ChatMessageModel>> getChatHistory(
@@ -61,15 +62,18 @@ class PlannerProvider with ChangeNotifier {
       );
 
       if (isNewConversation) {
-        _currentConversationId = await _plannerRepository.createNewConversation(userId);
-      } else _currentConversationId ??= await _plannerRepository.createNewConversation(userId);
-
+        _currentConversationId =
+            await _plannerRepository.createNewConversation(userId);
+      } else
+        _currentConversationId ??=
+            await _plannerRepository.createNewConversation(userId);
       await _analytics.logEvent(
         name: 'planner_message_sent',
         parameters: {
           'message_length': message.length,
           'conversation_id': _currentConversationId ?? 'unknown',
-          'is_new_conversation': isNewConversation,
+          'is_new_conversation':
+              isNewConversation ? "true" : "false", // Convert boolean to string
         },
       );
     } catch (e) {
@@ -85,7 +89,8 @@ class PlannerProvider with ChangeNotifier {
   }
 
   /// Adds a task to the checklist.
-  Future<void> addTaskToChecklist(String userId, Map<String, dynamic> taskData) async {
+  Future<void> addTaskToChecklist(
+      String userId, Map<String, dynamic> taskData) async {
     try {
       _errorMessage = null;
       if (!_isValidTask(taskData)) {
@@ -111,12 +116,14 @@ class PlannerProvider with ChangeNotifier {
           'task_id': task.id,
           'category': task.category,
           'priority': task.priority,
-          'has_time': task.time != null,
+          'has_time':
+              task.time != null ? "true" : "false", // Convert boolean to string
         },
       );
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to add task to checklist: ${_formatErrorMessage(e)}';
+      _errorMessage =
+          'Failed to add task to checklist: ${_formatErrorMessage(e)}';
       await _analytics.logEvent(
         name: 'planner_task_add_error',
         parameters: {'error': e.toString()},
@@ -208,7 +215,8 @@ class PlannerProvider with ChangeNotifier {
         final message = ChatMessageModel.fromJson(doc.data());
         if (message.tasks == null || message.isFinalized) continue;
 
-        final hasSelectedTask = message.tasks!.any((task) => _selectedTasks.containsKey(task['id']));
+        final hasSelectedTask = message.tasks!
+            .any((task) => _selectedTasks.containsKey(task['id']));
         if (hasSelectedTask) {
           await _plannerRepository.finalizeTasks(doc.id);
         }
@@ -239,7 +247,8 @@ class PlannerProvider with ChangeNotifier {
   Future<void> startNewConversation(String userId) async {
     try {
       _errorMessage = null;
-      _currentConversationId = await _plannerRepository.createNewConversation(userId);
+      _currentConversationId =
+          await _plannerRepository.createNewConversation(userId);
       _selectedTasks.clear();
       _finalizedTasks.clear();
       notifyListeners();
@@ -249,7 +258,8 @@ class PlannerProvider with ChangeNotifier {
         parameters: {'conversation_id': _currentConversationId ?? 'unknown'},
       );
     } catch (e) {
-      _errorMessage = 'Failed to start new conversation: ${_formatErrorMessage(e)}';
+      _errorMessage =
+          'Failed to start new conversation: ${_formatErrorMessage(e)}';
       await _analytics.logEvent(
         name: 'planner_new_conversation_error',
         parameters: {'error': e.toString()},
@@ -287,7 +297,8 @@ class PlannerProvider with ChangeNotifier {
       _errorMessage = null;
       await _plannerRepository.clearConversation(userId, conversationId);
       if (_currentConversationId == conversationId) {
-        _currentConversationId = await _plannerRepository.createNewConversation(userId);
+        _currentConversationId =
+            await _plannerRepository.createNewConversation(userId);
       }
       _selectedTasks.clear();
       _finalizedTasks.clear();
@@ -324,8 +335,9 @@ class PlannerProvider with ChangeNotifier {
   DateTime? _parseTaskTime(String time) {
     try {
       final now = DateTime.now();
-      final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
-      final parsedTime = DateTime.parse('$now.year-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} $time:00');
+      // Directly format the date without using DateFormat
+      final parsedTime = DateTime.parse(
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} $time:00');
       return parsedTime;
     } catch (e) {
       return null;

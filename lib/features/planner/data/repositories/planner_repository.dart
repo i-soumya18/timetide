@@ -125,9 +125,37 @@ class PlannerRepository {
         isUser: true,
         timestamp: DateTime.now(),
       );
-      await saveMessage(userMessage); // Generate AI response with tasks
-      final tasks = await _geminiService.generateTaskPlan(
-        message.trim(),
+      await saveMessage(userMessage);
+
+      // Load existing messages for this conversation to maintain context
+      List<Map<String, dynamic>> conversationHistory = [];
+      if (!isNewConversation) {
+        // Convert database messages to format expected by GeminiService
+        final messagesSnapshot = await _firestore
+            .collection('plannerChats')
+            .where('userId', isEqualTo: userId)
+            .where('conversationId', isEqualTo: conversationId)
+            .where('isDeleted', isEqualTo: false)
+            .orderBy('timestamp')
+            .limit(10) // Limit to the most recent messages
+            .get();
+
+        conversationHistory = messagesSnapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'isUser': data['isUser'] as bool? ?? false,
+            'message': data['message'] as String? ?? '',
+            'tasks': data['tasks'],
+          };
+        }).toList();
+      }
+
+      // Generate AI response with tasks, passing the conversation history
+      final (responseText, tasks) = await _geminiService.sendChatMessage(
+        userId: userId,
+        message: message.trim(),
+        conversationHistory: conversationHistory,
+        isNewConversation: isNewConversation,
       );
 
       // Create and save AI response
@@ -136,19 +164,47 @@ class PlannerRepository {
         id: aiMessageId,
         userId: userId,
         conversationId: conversationId,
-        message: 'Here’s a suggested plan based on our conversation:',
+        message: responseText,
         isUser: false,
         tasks: tasks,
         timestamp: DateTime.now(),
       );
       await saveMessage(aiMessage);
     } catch (e) {
+      String errorConversationId;
+      try {
+        errorConversationId = await _getCurrentConversationId(userId);
+      } catch (_) {
+        errorConversationId =
+            const Uuid().v4(); // Fallback if we can't get the current ID
+      }
+
+      // Create and save error message
+      final errorMessageId = const Uuid().v4();
+      final errorMessage = ChatMessageModel(
+        id: errorMessageId,
+        userId: userId,
+        conversationId: errorConversationId,
+        message: "Sorry, I couldn't process your request. Please try again.",
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+      await saveMessage(errorMessage);
+
+      // Log detailed error
+      print("Gemini API Error: ${e.toString()}");
+
       if (e.toString().contains('API key')) {
-        throw Exception('Invalid API key configuration');
-      } else if (e.toString().contains('Network error')) {
-        throw Exception('Network issue: Unable to reach AI service');
+        throw Exception('Invalid API key configuration. Check your .env file.');
+      } else if (e.toString().contains('Network error') ||
+          e.toString().contains('SocketException')) {
+        throw Exception(
+            'Network issue: Unable to reach AI service. Check your internet connection.');
+      } else if (e.toString().contains('400 Bad Request')) {
+        throw Exception(
+            'API Error: Invalid request format. This might be due to content policy violation or API key issues.');
       } else {
-        throw Exception('Failed to send message: $e');
+        throw Exception('Failed to send message: ${e.toString()}');
       }
     }
   }
@@ -228,9 +284,7 @@ class PlannerRepository {
       final currentId = await _getCurrentConversationId(userId);
       if (currentId == conversationId) {
         await createNewConversation(userId);
-      }
-
-      // Clear GeminiService history
+      } // Clear GeminiService history
       _geminiService.clearConversationHistory(userId);
     } catch (e) {
       throw Exception('Failed to clear conversation: $e');

@@ -33,7 +33,9 @@ class HealthHabitsProvider with ChangeNotifier {
         name: 'habit_created',
         parameters: {
           'name': habit.name,
-          'has_reminder': habit.reminderTime != null,
+          'has_reminder': habit.reminderTime != null
+              ? "true"
+              : "false", // Convert boolean to string
         },
       );
       if (habit.reminderTime != null) {

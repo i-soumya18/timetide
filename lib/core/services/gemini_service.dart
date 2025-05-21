@@ -15,18 +15,38 @@ class GeminiService {
   // Storage for conversation histories by user ID
   final Map<String, List<Map<String, dynamic>>> _conversationHistories = {};
 
+  GeminiService() {
+    // Validate API key at initialization
+    if (_apiKey.isEmpty) {
+      print(
+          'WARNING: Gemini API key is missing. Set GEMINI_API_KEY in .env file.');
+    } else if (_apiKey.length < 20) {
+      // Simple check for key validity
+      print('WARNING: Gemini API key appears to be invalid (too short).');
+    }
+  }
+
   /// Sends a chat message, maintaining conversation history for continuous chatting.
   /// Returns a tuple of (response text, list of tasks).
   Future<(String, List<Map<String, dynamic>>)> sendChatMessage({
     required String userId,
     required String message,
-    required List<Map<String, dynamic>> conversationHistory,
+    List<Map<String, dynamic>>? conversationHistory,
     bool isNewConversation = false,
   }) async {
     try {
       if (_apiKey.isEmpty) {
         throw Exception('Gemini API key is missing');
       }
+
+      // Clear history if it's a new conversation
+      if (isNewConversation) {
+        _clearConversationHistory(userId);
+      }
+
+      // Get the current conversation history for this user
+      List<Map<String, dynamic>> history =
+          conversationHistory ?? _conversationHistories[userId] ?? [];
 
       // System instruction for the AI
       const systemInstruction = '''
@@ -45,36 +65,64 @@ You are TimeTide, an AI-powered task planner and conversational assistant. Your 
 - Ensure responses are concise, friendly, and contextually relevant.
 ''';
 
-      // Build the conversation context
-      final messages = <Map<String, dynamic>>[
-        if (isNewConversation)
-          {
-            'role': 'system',
-            'parts': [
-              {'text': systemInstruction}
-            ]
-          },
-        ...conversationHistory.map((msg) => {
-              'role': msg['isUser'] ? 'user' : 'model',
-              'parts': [
-                {
-                  'text': msg['tasks'] != null
-                      ? '${msg['message']}\n\n```json\n${jsonEncode(msg['tasks'])}\n```'
-                      : msg['message']
-                }
-              ]
-            }),
+      // Build the conversation context - ensure proper formatting for Gemini API
+      final contents = <Map<String, dynamic>>[
+        // System message
         {
           'role': 'user',
           'parts': [
-            {'text': message}
+            {'text': 'System: $systemInstruction'}
           ]
-        },
+        }
       ];
 
-      // Make the API request with retry logic
+      // Add conversation history
+      for (var msg in history) {
+        contents.add({
+          'role': msg['isUser'] ? 'user' : 'model',
+          'parts': [
+            {
+              'text': msg['tasks'] != null
+                  ? '${msg['message']}\n\n```json\n${jsonEncode(msg['tasks'])}\n```'
+                  : msg['message']
+            }
+          ]
+        });
+      }
+
+      // Add current user message
+      contents.add({
+        'role': 'user',
+        'parts': [
+          {'text': message}
+        ]
+      }); // Make the API request with retry logic
       final response = await _makeApiRequestWithRetry({
-        'contents': messages,
+        'contents': contents,
+        'safetySettings': [
+          {
+            'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            'threshold': 'BLOCK_ONLY_HIGH'
+          },
+          {
+            'category': 'HARM_CATEGORY_HATE_SPEECH',
+            'threshold': 'BLOCK_ONLY_HIGH'
+          },
+          {
+            'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            'threshold': 'BLOCK_ONLY_HIGH'
+          },
+          {
+            'category': 'HARM_CATEGORY_HARASSMENT',
+            'threshold': 'BLOCK_ONLY_HIGH'
+          }
+        ],
+        'generationConfig': {
+          'temperature': 0.7,
+          'topK': 40,
+          'topP': 0.95,
+          'maxOutputTokens': 800,
+        }
       });
 
       // Parse the response
@@ -88,10 +136,44 @@ You are TimeTide, an AI-powered task planner and conversational assistant. Your 
       // Extract text and tasks
       final (responseText, tasks) = _parseResponse(content);
 
+      // Add the user message to conversation history
+      _addToConversationHistory(userId, {
+        'isUser': true,
+        'message': message,
+        'tasks': null,
+      });
+
+      // Add the AI response to conversation history
+      _addToConversationHistory(userId, {
+        'isUser': false,
+        'message': responseText,
+        'tasks': tasks,
+      });
+
       return (responseText, tasks);
     } catch (e) {
       throw Exception('Failed to send chat message: $e');
     }
+  }
+
+  /// Adds a message to the conversation history for a specific user
+  void _addToConversationHistory(String userId, Map<String, dynamic> message) {
+    if (!_conversationHistories.containsKey(userId)) {
+      _conversationHistories[userId] = [];
+    }
+    _conversationHistories[userId]!.add(message);
+
+    // Keep only the last 10 messages for context window management
+    if (_conversationHistories[userId]!.length > 10) {
+      _conversationHistories[userId] = _conversationHistories[userId]!
+          .sublist(_conversationHistories[userId]!.length - 10);
+    }
+  }
+
+  /// Gets the current conversation history for a specific user
+  List<Map<String, dynamic>> getConversationHistory(String userId) {
+    return List<Map<String, dynamic>>.from(
+        _conversationHistories[userId] ?? []);
   }
 
   /// Generates a task plan based on a prompt (used for initial task generation).
@@ -115,8 +197,13 @@ You are TimeTide, an AI-powered task planner and conversational assistant. Your 
     }
   }
 
-  /// Clears the conversation history for a specific user.
+  /// Public method to clear the conversation history for a specific user.
   void clearConversationHistory(String userId) {
+    _clearConversationHistory(userId);
+  }
+
+  /// Clears the conversation history for a specific user.
+  void _clearConversationHistory(String userId) {
     _conversationHistories[userId] = [];
   }
 
@@ -126,6 +213,9 @@ You are TimeTide, an AI-powered task planner and conversational assistant. Your 
     int attempt = 0;
     while (attempt < _maxRetries) {
       try {
+        // For debugging
+        print("Sending request to Gemini API: ${jsonEncode(body)}");
+
         final response = await http.post(
           Uri.parse('$_baseUrl?key=$_apiKey'),
           headers: {'Content-Type': 'application/json'},
@@ -134,14 +224,30 @@ You are TimeTide, an AI-powered task planner and conversational assistant. Your 
 
         if (response.statusCode == 200) {
           return response;
-        } else if (response.statusCode >= 500 && attempt < _maxRetries - 1) {
-          // Retry for server errors
-          await Future.delayed(_retryDelay * (attempt + 1));
-          attempt++;
-          continue;
         } else {
-          throw Exception(
-              'API request failed: ${response.statusCode} ${response.reasonPhrase}');
+          // Log detailed error information
+          print("Gemini API Error: ${response.statusCode}");
+          print("Response body: ${response.body}");
+
+          if (response.statusCode >= 500 && attempt < _maxRetries - 1) {
+            // Retry for server errors
+            await Future.delayed(_retryDelay * (attempt + 1));
+            attempt++;
+            continue;
+          } else if (response.statusCode == 400) {
+            // Check if it's a specific known issue
+            final errorBody = jsonDecode(response.body);
+            if (errorBody['error'] != null &&
+                errorBody['error']['message'] != null) {
+              throw Exception(
+                  'API request failed: ${errorBody['error']['message']}');
+            }
+            throw Exception(
+                'API request failed: Invalid request format. 400 Bad Request. Check your API key and request structure.');
+          } else {
+            throw Exception(
+                'API request failed: ${response.statusCode} ${response.reasonPhrase} - ${response.body}');
+          }
         }
       } catch (e) {
         if (attempt < _maxRetries - 1 &&
