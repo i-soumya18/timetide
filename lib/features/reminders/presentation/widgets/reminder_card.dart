@@ -102,8 +102,9 @@ class _ReminderCardState extends State<ReminderCard>
     final typeColor = _getTypeColor();
 
     // Define colors based on the provided premium color palette
-    final Color cardBackground1 = const Color(0xFF004643); // Dark teal
-    final Color cardBackground2 = const Color(0xFF003459); // Deep blue
+    final Color cardBackground1 = const Color(0xFF060111); // Copper Blue
+    final Color cardBackground2 = const Color(0xFF0E031A); // Light Shaded Pink
+
     final Color accentColor = widget.reminder.type == 'task'
         ? const Color(0xFF6564DB) // Purple accent for tasks
         : const Color(0xFFA23B72); // Pink accent for habits

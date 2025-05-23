@@ -103,13 +103,11 @@ class _PlannerScreenState extends State<PlannerScreen>
     _sendButtonController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
-    );
-
-    // Typing indicator animation controller
+    ); // Typing indicator animation controller - no longer repeating to avoid flickering
     _typingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat();
+    );
 
     // Input field focus animation controller
     _inputFocusController = AnimationController(
@@ -866,35 +864,9 @@ class _PlannerScreenState extends State<PlannerScreen>
           children: [
             // Add timestamp for first message or when there's a significant time gap
             if (index == 0 || _shouldShowTimestamp(messages, index))
-              _buildTimestampDivider(message.timestamp),
-
-            // The chat message
-            AnimatedBuilder(
-              animation: Listenable.merge([_typingController]),
-              builder: (context, child) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: message.isUser
-                        ? const Offset(1, 0)
-                        : const Offset(-1, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: _typingController,
-                    curve: const Interval(0.0, 0.3, curve: Curves.easeOutCubic),
-                  )),
-                  child: FadeTransition(
-                    opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: _typingController,
-                        curve: const Interval(0.0, 0.3, curve: Curves.easeIn),
-                      ),
-                    ),
-                    child: child,
-                  ),
-                );
-              },
-              child: _buildMessageBubble(message),
-            ),
+              _buildTimestampDivider(message
+                  .timestamp), // The chat message without flickering animation
+            _buildMessageBubble(message),
 
             // Task suggestions from AI if available
             if (!message.isUser && message.tasks != null)

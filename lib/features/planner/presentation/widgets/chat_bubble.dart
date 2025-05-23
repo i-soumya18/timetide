@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:timetide/core/colors.dart';
 
 /// A chat bubble widget for displaying user or AI messages in the planner interface.
-/// Supports animations, long-press actions, and adaptive styling for light/dark modes.
+/// Supports long-press actions and adaptive styling for light/dark modes.
 class ChatBubble extends StatefulWidget {
   final String message;
   final bool isUser;
@@ -24,47 +24,11 @@ class ChatBubble extends StatefulWidget {
   State<ChatBubble> createState() => _ChatBubbleState();
 }
 
-class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
+class _ChatBubbleState extends State<ChatBubble> {
   @override
   void initState() {
     super.initState();
-    // Initialize animation controller for fade and slide effects
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-
-    // Define fade animation
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeIn,
-      ),
-    );
-
-    // Define slide animation based on message sender
-    _slideAnimation = Tween<Offset>(
-      begin: widget.isUser ? const Offset(0.5, 0) : const Offset(-0.5, 0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    // Start animation
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
+    // No animations to initialize
   }
 
   /// Handles long-press actions (copy, delete).
@@ -81,7 +45,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.copy_rounded, color: AppColors.textLight),
+              leading:
+                  const Icon(Icons.copy_rounded, color: AppColors.textLight),
               title: Text(
                 'Copy Message',
                 style: GoogleFonts.poppins(
@@ -96,9 +61,11 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                   SnackBar(
                     behavior: SnackBarBehavior.floating,
                     margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
                     backgroundColor: AppColors.success.withOpacity(0.9),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     content: Text(
                       'Message copied to clipboard',
                       style: GoogleFonts.poppins(
@@ -113,7 +80,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
             ),
             if (widget.isUser)
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+                leading: const Icon(Icons.delete_outline_rounded,
+                    color: AppColors.error),
                 title: Text(
                   'Delete Message',
                   style: GoogleFonts.poppins(
@@ -128,9 +96,11 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
                     SnackBar(
                       behavior: SnackBarBehavior.floating,
                       margin: const EdgeInsets.all(16),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
                       backgroundColor: AppColors.info.withOpacity(0.9),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       content: Text(
                         'Delete functionality not yet implemented',
                         style: GoogleFonts.poppins(
@@ -156,105 +126,93 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
 
     return GestureDetector(
       onLongPress: () => _handleLongPress(context),
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: Align(
-            alignment: widget.isUser ? Alignment.centerRight : Alignment.centerLeft,
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: widget.isUser
-                      ? [
-                          AppColors.primary.withOpacity(0.9),
-                          AppColors.primaryLight.withOpacity(0.8),
-                        ]
-                      : [
-                          isDarkMode
-                              ? AppColors.backgroundMedium.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.9),
-                          isDarkMode
-                              ? AppColors.backgroundDark.withOpacity(0.8)
-                              : Colors.white.withOpacity(0.7),
-                        ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20).copyWith(
-                  bottomRight:
-                      widget.isUser ? Radius.zero : const Radius.circular(20),
-                  bottomLeft:
-                      widget.isUser ? const Radius.circular(20) : Radius.zero,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.message.isEmpty ? ' ' : widget.message,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      color: widget.isUser
-                          ? AppColors.textLight
-                          : isDarkMode
-                              ? AppColors.textLight
-                              : AppColors.textDark,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    textAlign: TextAlign.left,
-                    softWrap: true,
-                  ),
-                  if (widget.timestamp != null || widget.isEdited) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.timestamp != null)
-                          Text(
-                            _formatTimestamp(widget.timestamp!),
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: widget.isUser
-                                  ? AppColors.textLight.withOpacity(0.7)
-                                  : isDarkMode
-                                      ? AppColors.textMedium.withOpacity(0.7)
-                                      : AppColors.textDark.withOpacity(0.7),
-                            ),
-                          ),
-                        if (widget.isEdited) ...[
-                          const SizedBox(width: 6),
-                          Text(
-                            'Edited',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                              color: widget.isUser
-                                  ? AppColors.textLight.withOpacity(0.7)
-                                  : isDarkMode
-                                      ? AppColors.textMedium.withOpacity(0.7)
-                                      : AppColors.textDark.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ],
-              ),
+      child: Align(
+        alignment: widget.isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: widget.isUser
+                  ? [
+                      AppColors.primary.withOpacity(0.9),
+                      AppColors.primaryLight.withOpacity(0.8),
+                    ]
+                  : [
+                      const Color(0xFF613DC1)
+                          .withOpacity(0.8), // Deep Indigo/Violet
+                      const Color(0xFF7752E3).withOpacity(0.7), // Royal Purple
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(20).copyWith(
+              bottomRight:
+                  widget.isUser ? Radius.zero : const Radius.circular(20),
+              bottomLeft:
+                  widget.isUser ? const Radius.circular(20) : Radius.zero,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.message.isEmpty ? ' ' : widget.message,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  color: widget.isUser
+                      ? AppColors.textLight
+                      : Colors
+                          .white, // Always white text for AI messages for better contrast
+                  fontWeight: FontWeight.w400,
+                ),
+                textAlign: TextAlign.left,
+                softWrap: true,
+              ),
+              if (widget.timestamp != null || widget.isEdited) ...[
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.timestamp != null)
+                      Text(
+                        _formatTimestamp(widget.timestamp!),
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: widget.isUser
+                              ? AppColors.textLight.withOpacity(0.7)
+                              : Colors.white.withOpacity(
+                                  0.8), // Brighter for violet background
+                        ),
+                      ),
+                    if (widget.isEdited) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        'Edited',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: widget.isUser
+                              ? AppColors.textLight.withOpacity(0.7)
+                              : Colors.white.withOpacity(
+                                  0.8), // Brighter for violet background
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -265,7 +223,8 @@ class _ChatBubbleState extends State<ChatBubble> with SingleTickerProviderStateM
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final messageDate = DateTime(timestamp.year, timestamp.month, timestamp.day);
+    final messageDate =
+        DateTime(timestamp.year, timestamp.month, timestamp.day);
     final timeFormat = DateFormat('h:mm a');
 
     if (messageDate == today) {

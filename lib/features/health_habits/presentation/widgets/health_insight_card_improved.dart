@@ -362,7 +362,9 @@ class _HealthInsightCardState extends State<HealthInsightCard>
                               progressPercentage, progressColor, isSmallScreen),
                     ),
 
-                    const SizedBox(height: 24), // Insights section
+                    const SizedBox(height: 24),
+
+                    // Insights section
                     Text(
                       'Quick Insights',
                       style: GoogleFonts.poppins(
@@ -401,50 +403,6 @@ class _HealthInsightCardState extends State<HealthInsightCard>
                           ),
                         ),
                       ],
-                    ),
-
-                    // Additional insights
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _weeklyInsight(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: 20,
-                            width: 1,
-                            color: Colors.white.withOpacity(0.1),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _monthlyInsight(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                              textAlign: TextAlign.end,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
 
                     const SizedBox(height: 24),

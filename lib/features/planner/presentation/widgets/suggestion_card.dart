@@ -28,7 +28,8 @@ class SuggestionCard extends StatefulWidget {
   State<SuggestionCard> createState() => _SuggestionCardState();
 }
 
-class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProviderStateMixin {
+class _SuggestionCardState extends State<SuggestionCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
@@ -97,9 +98,11 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                 SnackBar(
                   behavior: SnackBarBehavior.floating,
                   margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   backgroundColor: AppColors.success.withOpacity(0.9),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   content: Text(
                     '${widget.task['title']} added to checklist',
                     style: GoogleFonts.poppins(
@@ -114,7 +117,8 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             child: Text(
               'Add',
@@ -150,12 +154,9 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                           : Colors.grey[300]!.withOpacity(0.7),
                     ]
                   : [
-                      isDarkMode
-                          ? AppColors.backgroundMedium.withOpacity(0.9)
-                          : Colors.white.withOpacity(0.9),
-                      isDarkMode
-                          ? AppColors.backgroundDark.withOpacity(0.8)
-                          : Colors.white.withOpacity(0.8),
+                      const Color(0xFF613DC1)
+                          .withOpacity(0.6), // Deep Indigo/Violet
+                      const Color(0xFF7752E3).withOpacity(0.5), // Royal Purple
                     ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -184,7 +185,7 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                           fontWeight: FontWeight.w600,
                           color: widget.isFinalized
                               ? AppColors.textMedium
-                              : AppColors.primary,
+                              : Colors.white,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -201,7 +202,7 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                                   widget.onSelectionChanged!(value ?? false);
                                 }
                               : null,
-                          activeColor: AppColors.primary,
+                          activeColor: const Color(0xFF613DC1), // Deep Indigo
                           checkColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4),
@@ -246,18 +247,25 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                             isScrollControlled: true,
                             backgroundColor: AppColors.backgroundDark,
                             shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(24)),
                             ),
                             builder: (context) => DraggableScrollableSheet(
                               initialChildSize: 0.7,
                               maxChildSize: 0.9,
                               minChildSize: 0.5,
                               expand: false,
-                              builder: (context, scrollController) => SingleChildScrollView(
+                              builder: (context, scrollController) =>
+                                  SingleChildScrollView(
                                 controller: scrollController,
                                 child: TaskEditModal(
                                   task: widget.task,
-                                  categories: const ['Work', 'Health', 'Errands', 'Personal'],
+                                  categories: const [
+                                    'Work',
+                                    'Health',
+                                    'Errands',
+                                    'Personal'
+                                  ],
                                   onSave: (updatedTask) {
                                     widget.onModify!(updatedTask);
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -266,9 +274,11 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                                         margin: const EdgeInsets.all(16),
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 12, horizontal: 16),
-                                        backgroundColor: AppColors.success.withOpacity(0.9),
+                                        backgroundColor:
+                                            AppColors.success.withOpacity(0.9),
                                         shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12)),
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
                                         content: Text(
                                           '${updatedTask['title']} modified',
                                           style: GoogleFonts.poppins(
@@ -295,7 +305,9 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                       ),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: widget.isFinalized ? null : () => _confirmAddTask(context),
+                      onPressed: widget.isFinalized
+                          ? null
+                          : () => _confirmAddTask(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.isFinalized
                             ? AppColors.textDark.withOpacity(0.5)
@@ -305,7 +317,8 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                       ),
                       child: Text(
                         'Add to Checklist',
@@ -364,9 +377,7 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
             size: 16,
             color: isFinalized
                 ? AppColors.textMedium.withOpacity(0.7)
-                : isDarkMode
-                    ? AppColors.textLight.withOpacity(0.7)
-                    : AppColors.textDark.withOpacity(0.7),
+                : Colors.white.withOpacity(0.8),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -376,9 +387,7 @@ class _SuggestionCardState extends State<SuggestionCard> with SingleTickerProvid
                 fontSize: 14,
                 color: isFinalized
                     ? AppColors.textMedium.withOpacity(0.7)
-                    : isDarkMode
-                        ? AppColors.textLight.withOpacity(0.9)
-                        : AppColors.textDark.withOpacity(0.9),
+                    : Colors.white.withOpacity(0.9),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

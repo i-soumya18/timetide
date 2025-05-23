@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/services.dart';
 import 'package:timetide/features/authentication/providers/auth_provider.dart';
 import 'package:timetide/features/checklist/providers/checklist_provider.dart';
 import 'package:timetide/features/health_habits/presentation/widgets/habit_input_modal.dart';
@@ -12,7 +11,6 @@ import 'package:timetide/models/unified_task_model.dart';
 import '../../../health_habits/data/models/habit_model.dart';
 import '../widgets/reminder_card.dart';
 import '../widgets/unified_task_adapter.dart';
-import 'dart:ui';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -21,17 +19,58 @@ class RemindersScreen extends StatefulWidget {
   State<RemindersScreen> createState() => _RemindersScreenState();
 }
 
-class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+class _RemindersScreenState extends State<RemindersScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Premium Color Palette - Dark Pink & Black
+  static const Color _primaryDark = Color(0xFF0A0A0B);
+  static const Color _secondaryDark = Color(0xFF1A1A1B);
+  static const Color _accentPink = Color(0xFF921D67);
+  static const Color _accentPinkLight = Color(0xFFF06292);
+  static const Color _accentPinkDark = Color(0xFFAD1457);
+  static const Color _surfaceDark = Color(0xFF212121);
+  static const Color _cardDark = Color(0xFF2A2A2B);
+  static const Color _textPrimary = Color(0xFFFFFFFF);
+  static const Color _textSecondary = Color(0xFFB0B0B0);
+  static const Color _divider = Color(0xFF3A3A3B);
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+
+    // Initialize animations
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
-      duration: const Duration(milliseconds: 300),
     );
-    _animationController.forward();
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Start animations
+    _fadeController.forward();
+    _slideController.forward();
 
     final provider = Provider.of<RemindersProvider>(context, listen: false);
     provider.initializeNotifications();
@@ -39,7 +78,8 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _fadeController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
@@ -51,52 +91,58 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
     final healthHabitsProvider =
     Provider.of<HealthHabitsProvider>(context, listen: false);
 
-    // Add haptic feedback for premium tactile experience
-    HapticFeedback.mediumImpact();
-
     if (task != null) {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: const Color(0xFF004643),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        builder: (context) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+          decoration: const BoxDecoration(
+            color: _cardDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 20,
+                offset: Offset(0, -5),
+              ),
+            ],
+          ),
           child: DraggableScrollableSheet(
             initialChildSize: 0.7,
-            maxChildSize: 0.9,
+            maxChildSize: 0.95,
             minChildSize: 0.5,
             expand: false,
-            builder: (context, scrollController) => Column(
-              children: [
-                // Drag indicator
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6564DB).withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: UnifiedTaskInputAdapter(
-                      unifiedTask: task,
-                      categories: checklistProvider.categories,
-                      onSave: (newTask) {
-                        checklistProvider.updateTaskFromUnified(
-                            authProvider.user!.id, newTask);
-                        // Add haptic feedback for confirmation
-                        HapticFeedback.lightImpact();
-                      },
+            builder: (context, scrollController) => Container(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                children: [
+                  // Modal handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: _textSecondary,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: UnifiedTaskInputAdapter(
+                        unifiedTask: task,
+                        categories: checklistProvider.categories,
+                        onSave: (newTask) {
+                          checklistProvider.updateTaskFromUnified(
+                              authProvider.user!.id, newTask);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -105,49 +151,234 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: const Color(0xFF004643),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        builder: (context) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+          decoration: const BoxDecoration(
+            color: _cardDark,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 20,
+                offset: Offset(0, -5),
+              ),
+            ],
+          ),
           child: DraggableScrollableSheet(
             initialChildSize: 0.5,
-            maxChildSize: 0.7,
+            maxChildSize: 0.8,
             minChildSize: 0.4,
             expand: false,
-            builder: (context, scrollController) => Column(
-              children: [
-                // Drag indicator
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6564DB).withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: HabitInputModal(
-                      habit: habit,
-                      onSave: (newHabit) {
-                        healthHabitsProvider.updateHabit(
-                            authProvider.user!.id, newHabit);
-                        // Add haptic feedback for confirmation
-                        HapticFeedback.lightImpact();
-                      },
+            builder: (context, scrollController) => Container(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                children: [
+                  // Modal handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: _textSecondary,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: HabitInputModal(
+                        habit: habit,
+                        onSave: (newHabit) {
+                          healthHabitsProvider.updateHabit(
+                              authProvider.user!.id, newHabit);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       );
     }
+  }
+
+  Widget _buildPremiumAppBar() {
+    return Container(
+      height: MediaQuery.of(context).padding.top + kToolbarHeight,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            _accentPinkDark.withOpacity(0.9),
+            _accentPink.withOpacity(0.8),
+            _accentPinkLight.withOpacity(0.7),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _accentPink.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: [
+              // Premium back button
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Title with premium styling
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Reminders',
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'Stay on track with your tasks',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white.withOpacity(0.8),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Premium notification indicator
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      // Handle notification settings
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _accentPink.withOpacity(0.2),
+                      _accentPinkLight.withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(60),
+                  border: Border.all(
+                    color: _accentPink.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  Icons.schedule_rounded,
+                  size: 60,
+                  color: _accentPink.withOpacity(0.8),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'No Active Reminders',
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: _textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Create tasks and habits to see\nyour reminders here',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: _textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -156,105 +387,24 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
     final remindersProvider = Provider.of<RemindersProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Text(
-              'Reminders',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF613DC1),
-                fontSize: 22,
-                shadows: [
-                  Shadow(
-                    blurRadius: 2.0,
-                    color: Colors.black.withOpacity(0.3),
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Active reminder indicator - small glowing dot
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6564DB),
-                borderRadius: BorderRadius.circular(4),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF6564DB).withOpacity(0.6),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF004643),
-        elevation: 0,
-        actions: [
-          // Filter button with animation
-          IconButton(
-            icon: AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _animationController.value * 0.05,
-                  child: const Icon(
-                    Icons.filter_list_rounded,
-                    color: Color(0xFF613DC1),
-                  ),
-                );
-              },
-            ),
-            onPressed: () {
-              _animationController.reset();
-              _animationController.forward();
-              HapticFeedback.selectionClick();
-              // Filter functionality would go here
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // Add new reminder functionality
-          HapticFeedback.mediumImpact();
-        },
-        backgroundColor: const Color(0xFF613DC1),
-        foregroundColor: Colors.white,
-        elevation: 8,
-        highlightElevation: 2,
-        label: Row(
-          children: [
-            const Icon(Icons.notifications_active_outlined),
-            const SizedBox(width: 8),
-            Text(
-              'Add Reminder',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+      backgroundColor: _primaryDark,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(MediaQuery.of(context).padding.top + kToolbarHeight),
+        child: _buildPremiumAppBar(),
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF004643), Color(0xFF183A37)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-          image: DecorationImage(
-            image: const AssetImage('assets/images/pattern_overlay.png'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.05),
-              BlendMode.dstIn,
-            ),
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF0A0A0B), // Deep black
+              const Color(0xFF50014E), // Dark pink-black blend
+              const Color(0xFF38062A), // Rich dark pink-gray
+              const Color(0xFF0F0A0B), // Back to deep black
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            stops: const [0.0, 0.35, 0.65, 1.0],
           ),
         ),
         child: StreamBuilder<List<ReminderModel>>(
@@ -262,401 +412,245 @@ class _RemindersScreenState extends State<RemindersScreen> with SingleTickerProv
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      size: 48,
-                      color: Color(0xFFA23B72),
+                child: Container(
+                  margin: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.red.withOpacity(0.3),
+                      width: 1,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error: ${snapshot.error}',
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFFA23B72),
-                        fontSize: 16,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        color: Colors.red.shade300,
+                        size: 48,
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Retry logic
-                        setState(() {});
-                        HapticFeedback.mediumImpact();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF613DC1),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        'Retry',
+                      const SizedBox(height: 16),
+                      Text(
+                        'Something went wrong',
                         style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red.shade300,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Error: ${snapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: _textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
 
             if (!snapshot.hasData) {
-              // Skeleton loading with shimmer effect
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return SkeletonReminderCard(
-                    delayMilliseconds: index * 150,
-                  );
-                },
+              return Center(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: _cardDark.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(_accentPink),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Loading reminders...',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: _textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 
             final reminders = snapshot.data!;
             if (reminders.isEmpty) {
-              // Enhanced empty state
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF004643),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF613DC1).withOpacity(0.2),
-                            blurRadius: 30,
-                            spreadRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.notifications_off_outlined,
-                        size: 56,
-                        color: Color(0xFF6564DB),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'No active reminders',
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF6564DB),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Create a reminder to stay on track',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Add new reminder
-                        HapticFeedback.mediumImpact();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF613DC1),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        'Create Reminder',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              return _buildEmptyState();
             }
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: reminders.length,
-              itemBuilder: (context, index) {
-                final reminder = reminders[index];
-                return FutureBuilder(
-                  future: reminder.type == 'task'
-                      ? remindersProvider.getTask(reminder.referenceId)
-                      : remindersProvider.getHabit(reminder.referenceId),
-                  builder: (context, AsyncSnapshot snapshot) {
-                    final task = reminder.type == 'task'
-                        ? snapshot.data as UnifiedTaskModel?
-                        : null;
-                    final habit = reminder.type == 'habit'
-                        ? snapshot.data as HabitModel?
-                        : null;
-
-                    // Add staggered animation effect
-                    return AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return AnimatedOpacity(
-                          opacity: 1.0,
-                          duration: Duration(milliseconds: 300 + (index * 150)),
-                          curve: Curves.easeOut,
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween<double>(begin: 0.95, end: 1.0),
-                            duration: Duration(milliseconds: 300 + (index * 150)),
-                            curve: Curves.easeOut,
-                            builder: (context, value, child) {
-                              return Transform.translate(
-                                offset: Offset(0, 20 * (1 - value)),
-                                child: Transform.scale(
-                                  scale: value,
-                                  child: child,
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: MediaQuery.of(context).padding.top + kToolbarHeight + 20,
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverToBoxAdapter(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    _accentPink.withOpacity(0.2),
+                                    _accentPinkLight.withOpacity(0.1),
+                                  ],
                                 ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: ReminderCard(
-                                reminder: reminder,
-                                task: task,
-                                habit: habit,
-                                onSnooze10Min: () {
-                                  remindersProvider.snoozeReminder(
-                                      reminder.id, const Duration(minutes: 10));
-                                  HapticFeedback.lightImpact();
-                                  _showSnackBar(context, '${reminder.type} snoozed for 10 minutes');
-                                },
-                                onSnooze1Hour: () {
-                                  remindersProvider.snoozeReminder(
-                                      reminder.id, const Duration(hours: 1));
-                                  HapticFeedback.lightImpact();
-                                  _showSnackBar(context, '${reminder.type} snoozed for 1 hour');
-                                },
-                                onDismiss: () {
-                                  remindersProvider.dismissReminder(reminder.id);
-                                  HapticFeedback.mediumImpact();
-                                  _showSnackBar(context, '${reminder.type} dismissed');
-                                },
-                                onEdit: () => _showEditModal(context, task: task, habit: habit),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: _accentPink.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                '${reminders.length} Active',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _accentPink,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                            final reminder = reminders[index];
+                            return TweenAnimationBuilder<double>(
+                              duration: Duration(milliseconds: 300 + (index * 100)),
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Transform.translate(
+                                  offset: Offset(0, 20 * (1 - value)),
+                                  child: Opacity(
+                                    opacity: value,
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      child: FutureBuilder(
+                                        future: reminder.type == 'task'
+                                            ? remindersProvider.getTask(reminder.referenceId)
+                                            : remindersProvider.getHabit(reminder.referenceId),
+                                        builder: (context, AsyncSnapshot snapshot) {
+                                          final task = reminder.type == 'task'
+                                              ? snapshot.data as UnifiedTaskModel?
+                                              : null;
+                                          final habit = reminder.type == 'habit'
+                                              ? snapshot.data as HabitModel?
+                                              : null;
+
+                                          return ReminderCard(
+                                            reminder: reminder,
+                                            task: task,
+                                            habit: habit,
+                                            onSnooze10Min: () {
+                                              remindersProvider.snoozeReminder(
+                                                  reminder.id, const Duration(minutes: 10));
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    '${reminder.type} snoozed for 10 minutes',
+                                                    style: GoogleFonts.poppins(color: Colors.white),
+                                                  ),
+                                                  backgroundColor: _accentPink,
+                                                  behavior: SnackBarBehavior.floating,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            onSnooze1Hour: () {
+                                              remindersProvider.snoozeReminder(
+                                                  reminder.id, const Duration(hours: 1));
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    '${reminder.type} snoozed for 1 hour',
+                                                    style: GoogleFonts.poppins(color: Colors.white),
+                                                  ),
+                                                  backgroundColor: _accentPink,
+                                                  behavior: SnackBarBehavior.floating,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            onDismiss: () {
+                                              remindersProvider.dismissReminder(reminder.id);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    '${reminder.type} dismissed',
+                                                    style: GoogleFonts.poppins(color: Colors.white),
+                                                  ),
+                                                  backgroundColor: _surfaceDark,
+                                                  behavior: SnackBarBehavior.floating,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            onEdit: () => _showEditModal(
+                                              context,
+                                              task: task,
+                                              habit: habit,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          childCount: reminders.length,
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                  ],
+                ),
+              ),
             );
           },
         ),
       ),
     );
-  }
-
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.inter(),
-        ),
-        backgroundColor: const Color(0xFF003459),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: const Color(0xFF6564DB),
-          onPressed: () {},
-        ),
-      ),
-    );
-  }
-}
-
-// Skeleton loading card for shimmer effect
-class SkeletonReminderCard extends StatefulWidget {
-  final int delayMilliseconds;
-
-  const SkeletonReminderCard({
-    super.key,
-    this.delayMilliseconds = 0,
-  });
-
-  @override
-  State<SkeletonReminderCard> createState() => _SkeletonReminderCardState();
-}
-
-class _SkeletonReminderCardState extends State<SkeletonReminderCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _shimmerController;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmerController = AnimationController.unbounded(vsync: this)
-      ..repeat(min: -0.5, max: 1.5, period: const Duration(milliseconds: 1000));
-
-    if (widget.delayMilliseconds > 0) {
-      Future.delayed(Duration(milliseconds: widget.delayMilliseconds), () {
-        if (mounted) {
-          _shimmerController.repeat(min: -0.5, max: 1.5, period: const Duration(milliseconds: 1000));
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _shimmerController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        height: 140,
-        decoration: BoxDecoration(
-          color: const Color(0xFF003459).withOpacity(0.85),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFF613DC1).withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: AnimatedBuilder(
-          animation: _shimmerController,
-          builder: (context, child) {
-            return ShaderMask(
-              blendMode: BlendMode.srcATop,
-              shaderCallback: (bounds) {
-                return LinearGradient(
-                  colors: [
-                    Colors.grey.shade800,
-                    Colors.grey.shade500,
-                    Colors.grey.shade800,
-                  ],
-                  stops: const [0.1, 0.3, 0.5],
-                  begin: const Alignment(-1.0, -0.5),
-                  end: const Alignment(1.0, 0.5),
-                  transform: _SlidingGradientTransform(
-                    slidePercent: _shimmerController.value,
-                  ),
-                ).createShader(bounds);
-              },
-              child: child,
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: 60,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: 200,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SlidingGradientTransform extends GradientTransform {
-  const _SlidingGradientTransform({
-    required this.slidePercent,
-  });
-
-  final double slidePercent;
-
-  @override
-  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    return Matrix4.translationValues(bounds.width * slidePercent, 0.0, 0.0);
   }
 }
